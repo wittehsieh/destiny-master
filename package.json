@@ -1,0 +1,12 @@
+{
+  "name": "ziwei-local",
+  "version": "1.0.0",
+  "description": "本地紫微斗數排盤網站",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

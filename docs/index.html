@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>紫微斗數排盤</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --gold: #c9a24b;
+    --text: #e8e6e1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    padding: 16px;
+  }
+  h1 {
+    font-size: 1.3rem;
+    color: var(--gold);
+    text-align: center;
+    margin: 0 0 16px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 auto 16px;
+    max-width: 900px;
+  }
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+  }
+  .field.checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .field.full-width {
+    flex-basis: 100%;
+  }
+  input, select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+  button {
+    background: var(--gold);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  .error {
+    color: #e07070;
+    margin-top: 8px;
+    font-size: 0.85rem;
+  }
+  .hidden { display: none !important; }
+
+  .chart-wrap {
+    max-width: 1160px;
+    margin: 0 auto 16px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, minmax(140px, auto));
+    gap: 4px;
+    aspect-ratio: 1 / 1;
+    flex: 1 1 560px;
+    max-width: 800px;
+  }
+  .palace-info-panel {
+    flex: 1 1 260px;
+    max-width: 320px;
+    position: sticky;
+    top: 16px;
+    margin: 0;
+  }
+  .palace-info-panel h2 {
+    font-size: 1rem;
+    color: var(--gold);
+    margin: 0 0 10px;
+  }
+  #palace-info-content {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #b7bccb;
+  }
+  #palace-info-content .info-title {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.95rem;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .palace {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 0.72rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: default;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .palace:hover {
+    border-color: var(--gold);
+    background: #1d2029;
+  }
+  .palace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+  }
+  .palace-name {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.85rem;
+  }
+  .palace-stem-branch {
+    font-size: 0.7rem;
+    color: #8f93a0;
+  }
+  .body-tag {
+    color: #e07070;
+    font-size: 0.65rem;
+    margin-left: 4px;
+  }
+  .major-star {
+    color: var(--text);
+    font-weight: bold;
+  }
+  .star-line {
+    margin-bottom: 1px;
+    line-height: 1.25;
+  }
+  .brightness {
+    color: #8f93a0;
+    font-size: 0.65rem;
+  }
+  .mutagen {
+    display: inline-block;
+    margin-left: 2px;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    background: var(--gold);
+    color: #1a1a1a;
+  }
+  .minor-star { color: #b7bccb; }
+  .adjective-star { color: #6d7180; font-size: 0.65rem; }
+
+  .center-info {
+    grid-column: 2 / span 2;
+    grid-row: 2 / span 2;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+  .center-info div span.label {
+    color: var(--gold);
+    margin-right: 4px;
+  }
+  .horoscope-toggle-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .horoscope-toggle {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  .horoscope-toggle.active {
+    font-weight: bold;
+  }
+  .horoscope-toggle[data-scope="yearly"].active {
+    border-color: #5b9bd5;
+    color: #5b9bd5;
+    background: rgba(91, 155, 213, 0.15);
+  }
+  .horoscope-toggle[data-scope="monthly"].active {
+    border-color: #70ad47;
+    color: #70ad47;
+    background: rgba(112, 173, 71, 0.15);
+  }
+  .horoscope-toggle[data-scope="daily"].active {
+    border-color: #b57edc;
+    color: #b57edc;
+    background: rgba(181, 126, 220, 0.15);
+  }
+  #horoscope-legend {
+    font-size: 0.66rem;
+    line-height: 1.5;
+  }
+  .horoscope-overlay {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 3px;
+  }
+  .horoscope-tag {
+    font-size: 0.6rem;
+    border: 1px solid;
+    border-radius: 3px;
+    padding: 1px 4px;
+    line-height: 1.4;
+  }
+  .horoscope-scope-label {
+    font-weight: bold;
+    margin-right: 3px;
+  }
+
+  @media (max-width: 640px) {
+    .chart-grid {
+      grid-template-rows: repeat(4, minmax(90px, auto));
+    }
+    .palace { font-size: 0.6rem; padding: 4px; }
+    .palace-name { font-size: 0.72rem; }
+    .center-info { font-size: 0.65rem; padding: 6px; }
+  }
+
+  .plain-text-panel h2 {
+    font-size: 1rem;
+    color: var(--gold);
+    margin: 0 0 10px;
+  }
+  #plain-text-output {
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre;
+  }
+</style>
+</head>
+<body>
+  <h1>紫微斗數排盤</h1>
+
+  <div class="panel">
+    <form id="chart-form">
+      <div class="field">
+        <label for="dateType">曆別</label>
+        <select id="dateType">
+          <option value="solar">陽曆</option>
+          <option value="lunar">農曆</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="date">出生日期 (YYYY-M-D)</label>
+        <input type="text" id="date" placeholder="2000-8-16" required />
+      </div>
+      <div class="field checkbox hidden" id="leap-field">
+        <input type="checkbox" id="isLeapMonth" />
+        <label for="isLeapMonth">閏月</label>
+      </div>
+      <div class="field">
+        <label for="hour">時辰</label>
+        <select id="hour" required></select>
+      </div>
+      <div class="field">
+        <label for="gender">性別</label>
+        <select id="gender">
+          <option value="女">女</option>
+          <option value="男">男</option>
+        </select>
+      </div>
+      <div class="field checkbox">
+        <input type="checkbox" id="useTrueSolarTime" checked />
+        <label for="useTrueSolarTime">真太陽時</label>
+      </div>
+      <button type="submit">開始排盤</button>
+    </form>
+    <div class="error hidden" id="error-msg"></div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-grid hidden" id="chart-grid"></div>
+    <div class="panel palace-info-panel">
+      <h2>宮位說明</h2>
+      <div id="palace-info-content">將游標移到宮位上查看該宮對人生的影響</div>
+    </div>
+  </div>
+
+  <div class="panel plain-text-panel">
+    <h2>純文字結果（複製給 AI 用）</h2>
+    <textarea id="plain-text-output" readonly placeholder="排盤後會在這裡顯示純文字結果"></textarea>
+  </div>
+
+<script src="iztro.min.js"></script>
+<script>
+  const dateTypeSelect = document.getElementById('dateType');
+  const leapField = document.getElementById('leap-field');
+  const form = document.getElementById('chart-form');
+  const errorMsg = document.getElementById('error-msg');
+  const chartGrid = document.getElementById('chart-grid');
+  const hourSelect = document.getElementById('hour');
+  const plainTextOutput = document.getElementById('plain-text-output');
+
+  dateTypeSelect.addEventListener('change', () => {
+    leapField.classList.toggle('hidden', dateTypeSelect.value !== 'lunar');
+  });
+
+  const HOUR_OPTIONS = [
+    { value: 0, branch: '早子', range: '00:00–01:00' },
+    { value: 1, branch: '丑', range: '01:00–03:00' },
+    { value: 2, branch: '寅', range: '03:00–05:00' },
+    { value: 3, branch: '卯', range: '05:00–07:00' },
+    { value: 4, branch: '辰', range: '07:00–09:00' },
+    { value: 5, branch: '巳', range: '09:00–11:00' },
+    { value: 6, branch: '午', range: '11:00–13:00' },
+    { value: 7, branch: '未', range: '13:00–15:00' },
+    { value: 8, branch: '申', range: '15:00–17:00' },
+    { value: 9, branch: '酉', range: '17:00–19:00' },
+    { value: 10, branch: '戌', range: '19:00–21:00' },
+    { value: 11, branch: '亥', range: '21:00–23:00' },
+    { value: 12, branch: '晚子', range: '23:00–00:00' },
+  ];
+
+  hourSelect.innerHTML = HOUR_OPTIONS.map((opt) =>
+    `<option value="${opt.value}">${opt.branch}時（${opt.range}）</option>`
+  ).join('');
+
+  plainTextOutput.addEventListener('focus', () => plainTextOutput.select());
+
+  let currentPayload = null;
+  let currentAstrolabe = null;
+  let currentHourOption = null;
+  let horoscopeState = { yearly: false, monthly: false, daily: false };
+
+  const SCOPE_CONFIG = {
+    yearly: { label: '流年', color: '#5b9bd5' },
+    monthly: { label: '流月', color: '#70ad47' },
+    daily: { label: '流日', color: '#b57edc' },
+  };
+  const MUTAGEN_LABELS = ['祿', '權', '科', '忌'];
+
+  const palaceInfoContent = document.getElementById('palace-info-content');
+  const DEFAULT_PALACE_INFO = '將游標移到宮位上查看該宮對人生的影響';
+
+  const PALACE_MEANINGS = {
+    '命宮': '代表與生俱來的個性、才華與人生格局，是全盤的核心，影響整體命運的基調與發展方向。',
+    '兄弟': '代表與兄弟姊妹、平輩或合夥人之間的緣分、互動狀況與相處品質。',
+    '夫妻': '代表感情婚姻的狀態、配偶的特質，以及親密關係的相處模式。',
+    '子女': '代表與子女的緣分及教養狀況，也可延伸為部屬、晚輩關係與創作能力。',
+    '財帛': '代表賺錢能力、理財觀念、財富來源與財運的起伏變化。',
+    '疾厄': '代表健康狀況、體質強弱，以及容易罹患疾病的傾向。',
+    '遷移': '代表外出、遠行、環境變動的際遇，以及在外發展的人際機運。',
+    '僕役': '代表朋友、同事、部屬等人際往來，是助力還是阻力。',
+    '交友': '代表朋友、同事、部屬等人際往來，是助力還是阻力。',
+    '官祿': '代表事業發展、工作表現、學業成就與社會地位。',
+    '田宅': '代表不動產、居住環境、家庭背景與財產累積狀況。',
+    '福德': '代表精神生活、興趣嗜好、心靈狀態與先天福分。',
+    '父母': '代表與父母長輩的緣分及互動，也反映與上司、長官的相處狀況。',
+  };
+
+  function showPalaceInfo(palace) {
+    const meaning = PALACE_MEANINGS[palace.name] || '';
+    palaceInfoContent.innerHTML = `
+      <span class="info-title">${escapeHtml(palace.name)}${palace.isBodyPalace ? '（身宮）' : ''}</span>
+      ${escapeHtml(meaning)}
+    `;
+  }
+
+  function resetPalaceInfo() {
+    palaceInfoContent.textContent = DEFAULT_PALACE_INFO;
+  }
+
+  const BRANCH_POSITION = {
+    '巳': { col: 1, row: 1 },
+    '午': { col: 2, row: 1 },
+    '未': { col: 3, row: 1 },
+    '申': { col: 4, row: 1 },
+    '辰': { col: 1, row: 2 },
+    '酉': { col: 4, row: 2 },
+    '卯': { col: 1, row: 3 },
+    '戌': { col: 4, row: 3 },
+    '寅': { col: 1, row: 4 },
+    '丑': { col: 2, row: 4 },
+    '子': { col: 3, row: 4 },
+    '亥': { col: 4, row: 4 },
+  };
+
+  // ---- 排盤邏輯（原本在 server.js，現在直接在瀏覽器端用 iztro 瀏覽器版計算） ----
+
+  function mapStar(star) {
+    return {
+      name: star.name,
+      brightness: star.brightness || null,
+      mutagen: star.mutagen || null,
+    };
+  }
+
+  function simplifyAstrolabe(astrolabe) {
+    return {
+      gender: astrolabe.gender,
+      solarDate: astrolabe.solarDate,
+      lunarDate: astrolabe.lunarDate,
+      chineseDate: astrolabe.chineseDate,
+      zodiac: astrolabe.zodiac,
+      sign: astrolabe.sign,
+      fiveElementsClass: astrolabe.fiveElementsClass,
+      soul: astrolabe.soul,
+      body: astrolabe.body,
+      palaces: astrolabe.palaces.map((palace) => ({
+        index: palace.index,
+        name: palace.name,
+        isBodyPalace: palace.isBodyPalace,
+        isOriginalPalace: palace.isOriginalPalace,
+        heavenlyStem: palace.heavenlyStem,
+        earthlyBranch: palace.earthlyBranch,
+        majorStars: (palace.majorStars || []).map(mapStar),
+        minorStars: (palace.minorStars || []).map((s) => s.name),
+        adjectiveStars: (palace.adjectiveStars || []).map((s) => s.name),
+      })),
+    };
+  }
+
+  function simplifyHoroscopeItem(item) {
+    return {
+      heavenlyStem: item.heavenlyStem,
+      earthlyBranch: item.earthlyBranch,
+      index: item.index,
+      palaceNames: item.palaceNames,
+      mutagen: item.mutagen,
+      stars: (item.stars || []).map((palaceStars) => palaceStars.map(mapStar)),
+    };
+  }
+
+  function computeAstrolabe({ dateType, date, hour, gender, isLeapMonth, useTrueSolarTime, lang }) {
+    const { astro } = iztro;
+    return dateType === 'lunar'
+      ? astro.byLunar(date, hour, gender, isLeapMonth, useTrueSolarTime, lang)
+      : astro.bySolar(date, hour, gender, useTrueSolarTime, lang);
+  }
+
+  // ---- 表單送出：直接在瀏覽器端排盤，不再打 API ----
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    errorMsg.classList.add('hidden');
+
+    const hourValue = Number(hourSelect.value);
+    const hourOption = HOUR_OPTIONS.find((opt) => opt.value === hourValue);
+
+    const payload = {
+      dateType: dateTypeSelect.value,
+      date: document.getElementById('date').value.trim(),
+      hour: hourValue,
+      gender: document.getElementById('gender').value,
+      isLeapMonth: document.getElementById('isLeapMonth').checked,
+      useTrueSolarTime: document.getElementById('useTrueSolarTime').checked,
+      lang: 'zh-TW',
+    };
+
+    if (!payload.date) {
+      errorMsg.textContent = '請輸入出生日期';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const astrolabeRaw = computeAstrolabe(payload);
+      const astrolabe = simplifyAstrolabe(astrolabeRaw);
+
+      currentPayload = payload;
+      currentAstrolabe = astrolabe;
+      currentHourOption = hourOption;
+      renderChart(astrolabe);
+      refreshPlainText(null, []);
+    } catch (err) {
+      errorMsg.textContent = err.message || '排盤失敗';
+      errorMsg.classList.remove('hidden');
+      chartGrid.classList.add('hidden');
+    }
+  });
+
+  function renderChart(astrolabe) {
+    chartGrid.innerHTML = '';
+    chartGrid.classList.remove('hidden');
+
+    const centerInfo = document.createElement('div');
+    centerInfo.className = 'center-info';
+    centerInfo.innerHTML = `
+      <div><span class="label">陽曆生日</span>${escapeHtml(astrolabe.solarDate || '')}</div>
+      <div><span class="label">農曆生日</span>${escapeHtml(astrolabe.lunarDate || '')} ${escapeHtml(astrolabe.chineseDate || '')}</div>
+      <div><span class="label">性別/生肖/星座</span>${escapeHtml(astrolabe.gender || '')} / ${escapeHtml(astrolabe.zodiac || '')} / ${escapeHtml(astrolabe.sign || '')}</div>
+      <div><span class="label">五行局</span>${escapeHtml(astrolabe.fiveElementsClass || '')}</div>
+      <div><span class="label">命主/身主</span>${escapeHtml(astrolabe.soul || '')} / ${escapeHtml(astrolabe.body || '')}</div>
+      <div class="horoscope-toggle-row">
+        <button type="button" class="horoscope-toggle" data-scope="yearly">流年</button>
+        <button type="button" class="horoscope-toggle" data-scope="monthly">流月</button>
+        <button type="button" class="horoscope-toggle" data-scope="daily">流日</button>
+      </div>
+      <div id="horoscope-legend"></div>
+    `;
+    chartGrid.appendChild(centerInfo);
+
+    horoscopeState = { yearly: false, monthly: false, daily: false };
+    centerInfo.querySelectorAll('.horoscope-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const scope = btn.dataset.scope;
+        horoscopeState[scope] = !horoscopeState[scope];
+        btn.classList.toggle('active', horoscopeState[scope]);
+        updateHoroscopeOverlay();
+      });
+    });
+
+    (astrolabe.palaces || []).forEach((palace) => {
+      const pos = BRANCH_POSITION[palace.earthlyBranch];
+      const cell = document.createElement('div');
+      cell.className = 'palace';
+      if (pos) {
+        cell.style.gridColumn = String(pos.col);
+        cell.style.gridRow = String(pos.row);
+      }
+
+      const majorStarsHtml = (palace.majorStars || []).map((s) => `
+        <div class="star-line major-star">
+          ${escapeHtml(s.name)}
+          ${s.brightness ? `<span class="brightness">${escapeHtml(s.brightness)}</span>` : ''}
+          ${s.mutagen ? `<span class="mutagen">${escapeHtml(s.mutagen)}</span>` : ''}
+        </div>
+      `).join('');
+
+      const minorStarsHtml = (palace.minorStars || []).map((name) => `
+        <div class="star-line minor-star">${escapeHtml(name)}</div>
+      `).join('');
+
+      const adjectiveStarsHtml = (palace.adjectiveStars || []).length
+        ? `<div class="star-line adjective-star">${palace.adjectiveStars.map(escapeHtml).join(' ')}</div>`
+        : '';
+
+      cell.innerHTML = `
+        <div class="palace-header">
+          <span class="palace-name">${escapeHtml(palace.name)}${palace.isBodyPalace ? '<span class="body-tag">身</span>' : ''}</span>
+          <span class="palace-stem-branch">${escapeHtml(palace.heavenlyStem || '')}${escapeHtml(palace.earthlyBranch || '')}</span>
+        </div>
+        ${majorStarsHtml}
+        ${minorStarsHtml}
+        ${adjectiveStarsHtml}
+        <div class="horoscope-overlay" data-index="${palace.index}"></div>
+      `;
+
+      cell.addEventListener('mouseenter', () => showPalaceInfo(palace));
+      cell.addEventListener('mouseleave', resetPalaceInfo);
+      cell.addEventListener('click', () => showPalaceInfo(palace));
+
+      chartGrid.appendChild(cell);
+    });
+
+    resetPalaceInfo();
+  }
+
+  function updateHoroscopeOverlay() {
+    const activeScopes = Object.keys(horoscopeState).filter((scope) => horoscopeState[scope]);
+
+    if (activeScopes.length === 0) {
+      clearHoroscopeOverlay();
+      refreshPlainText(null, []);
+      return;
+    }
+    if (!currentPayload) return;
+
+    try {
+      const astrolabeRaw = computeAstrolabe(currentPayload);
+      const horoscopeRaw = astrolabeRaw.horoscope();
+      const horoscope = {
+        solarDate: horoscopeRaw.solarDate,
+        lunarDate: horoscopeRaw.lunarDate,
+        yearly: simplifyHoroscopeItem(horoscopeRaw.yearly),
+        monthly: simplifyHoroscopeItem(horoscopeRaw.monthly),
+        daily: simplifyHoroscopeItem(horoscopeRaw.daily),
+      };
+      renderHoroscopeOverlay(horoscope, activeScopes);
+      refreshPlainText(horoscope, activeScopes);
+    } catch (err) {
+      errorMsg.textContent = err.message || '運限計算失敗';
+      errorMsg.classList.remove('hidden');
+    }
+  }
+
+  function refreshPlainText(horoscope, activeScopes) {
+    if (!currentAstrolabe || !currentPayload) return;
+    plainTextOutput.value = formatPlainText(currentAstrolabe, currentPayload, currentHourOption, horoscope, activeScopes);
+  }
+
+  function clearHoroscopeOverlay() {
+    chartGrid.querySelectorAll('.horoscope-overlay').forEach((el) => { el.innerHTML = ''; });
+    const legendEl = document.getElementById('horoscope-legend');
+    if (legendEl) legendEl.innerHTML = '';
+  }
+
+  function renderHoroscopeOverlay(horoscope, activeScopes) {
+    clearHoroscopeOverlay();
+
+    const legendLines = [];
+
+    activeScopes.forEach((scope) => {
+      const item = horoscope[scope];
+      if (!item) return;
+      const cfg = SCOPE_CONFIG[scope];
+
+      const mutagenText = (item.mutagen || [])
+        .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
+        .join(' ');
+      legendLines.push(
+        `<div style="color:${cfg.color}">${escapeHtml(cfg.label)}四化（${escapeHtml(item.heavenlyStem || '')}${escapeHtml(item.earthlyBranch || '')}）：${escapeHtml(mutagenText)}</div>`
+      );
+
+      (item.palaceNames || []).forEach((name, idx) => {
+        const overlayEl = chartGrid.querySelector(`.horoscope-overlay[data-index="${idx}"]`);
+        if (!overlayEl) return;
+        const starsForPalace = (item.stars && item.stars[idx]) || [];
+        const starsText = starsForPalace
+          .map((s) => `${s.name}${s.mutagen ? `[${s.mutagen}]` : ''}`)
+          .join(' ');
+
+        const tag = document.createElement('div');
+        tag.className = 'horoscope-tag';
+        tag.style.color = cfg.color;
+        tag.style.borderColor = cfg.color;
+        tag.innerHTML = `<span class="horoscope-scope-label">${escapeHtml(cfg.label)}</span>${escapeHtml(name)}${starsText ? `　${escapeHtml(starsText)}` : ''}`;
+        overlayEl.appendChild(tag);
+      });
+    });
+
+    const legendEl = document.getElementById('horoscope-legend');
+    if (legendEl) legendEl.innerHTML = legendLines.join('');
+  }
+
+  function formatPlainText(astrolabe, payload, hourOption, horoscope, activeScopes) {
+    const lines = [];
+    lines.push('【紫微斗數命盤】');
+    lines.push(`性別：${astrolabe.gender || ''}`);
+    lines.push(`陽曆：${astrolabe.solarDate || ''}`);
+    lines.push(`農曆：${astrolabe.lunarDate || ''}`);
+    lines.push(`干支：${astrolabe.chineseDate || ''}`);
+    lines.push(`時辰：${hourOption ? `${hourOption.branch}時 (${hourOption.range})` : ''}`);
+    lines.push(`生肖：${astrolabe.zodiac || ''}　星座：${astrolabe.sign || ''}`);
+    lines.push(`五行局：${astrolabe.fiveElementsClass || ''}`);
+    lines.push(`命主：${astrolabe.soul || ''}　身主：${astrolabe.body || ''}`);
+    lines.push(`真太陽時：${payload.useTrueSolarTime ? '是' : '否'}`);
+    lines.push('');
+    lines.push('【十二宮】');
+
+    (astrolabe.palaces || []).forEach((palace) => {
+      const major = (palace.majorStars || [])
+        .map((s) => `${s.name}${s.brightness ? `(${s.brightness})` : ''}${s.mutagen ? `[化${s.mutagen}]` : ''}`)
+        .join('、');
+      const minor = (palace.minorStars || []).join('、');
+      const adjective = (palace.adjectiveStars || []).join('、');
+
+      lines.push(`${palace.name}${palace.isBodyPalace ? '（身宮）' : ''}　${palace.heavenlyStem || ''}${palace.earthlyBranch || ''}`);
+      if (major) lines.push(`  主星：${major}`);
+      if (minor) lines.push(`  副星：${minor}`);
+      if (adjective) lines.push(`  雜曜：${adjective}`);
+    });
+
+    if (horoscope && activeScopes && activeScopes.length) {
+      lines.push('');
+      lines.push('【運限】');
+
+      activeScopes.forEach((scope) => {
+        const item = horoscope[scope];
+        if (!item) return;
+        const cfg = SCOPE_CONFIG[scope];
+        const mutagenText = (item.mutagen || [])
+          .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
+          .join('、');
+
+        lines.push(`${cfg.label}（${item.heavenlyStem || ''}${item.earthlyBranch || ''}）四化：${mutagenText}`);
+
+        (item.palaceNames || []).forEach((name, idx) => {
+          const palace = (astrolabe.palaces || []).find((p) => p.index === idx);
+          const stemBranch = palace ? `${palace.heavenlyStem || ''}${palace.earthlyBranch || ''}` : '';
+          const starsForPalace = (item.stars && item.stars[idx]) || [];
+          const starsText = starsForPalace
+            .map((s) => `${s.name}${s.mutagen ? `[${s.mutagen}]` : ''}`)
+            .join('、');
+
+          lines.push(`  ${stemBranch}　${cfg.label}${name}${starsText ? `　流耀：${starsText}` : ''}`);
+        });
+        lines.push('');
+      });
+    }
+
+    return lines.join('\n');
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
