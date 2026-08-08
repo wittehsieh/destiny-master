@@ -219,6 +219,11 @@
   .horoscope-toggle.active {
     font-weight: bold;
   }
+  .horoscope-toggle[data-scope="decadal"].active {
+    border-color: #e0a53b;
+    color: #e0a53b;
+    background: rgba(224, 165, 59, 0.15);
+  }
   .horoscope-toggle[data-scope="yearly"].active {
     border-color: #5b9bd5;
     color: #5b9bd5;
@@ -374,9 +379,10 @@
   let currentPayload = null;
   let currentAstrolabe = null;
   let currentHourOption = null;
-  let horoscopeState = { yearly: false, monthly: false, daily: false };
+  let horoscopeState = { decadal: false, yearly: false, monthly: false, daily: false };
 
   const SCOPE_CONFIG = {
+    decadal: { label: '大限', color: '#e0a53b' },
     yearly: { label: '流年', color: '#5b9bd5' },
     monthly: { label: '流月', color: '#70ad47' },
     daily: { label: '流日', color: '#b57edc' },
@@ -457,6 +463,7 @@
         isOriginalPalace: palace.isOriginalPalace,
         heavenlyStem: palace.heavenlyStem,
         earthlyBranch: palace.earthlyBranch,
+        decadalRange: palace.decadal ? palace.decadal.range : null,
         majorStars: (palace.majorStars || []).map(mapStar),
         minorStars: (palace.minorStars || []).map((s) => s.name),
         adjectiveStars: (palace.adjectiveStars || []).map((s) => s.name),
@@ -538,6 +545,7 @@
       <div><span class="label">五行局</span>${escapeHtml(astrolabe.fiveElementsClass || '')}</div>
       <div><span class="label">命主/身主</span>${escapeHtml(astrolabe.soul || '')} / ${escapeHtml(astrolabe.body || '')}</div>
       <div class="horoscope-toggle-row">
+        <button type="button" class="horoscope-toggle" data-scope="decadal">大限</button>
         <button type="button" class="horoscope-toggle" data-scope="yearly">流年</button>
         <button type="button" class="horoscope-toggle" data-scope="monthly">流月</button>
         <button type="button" class="horoscope-toggle" data-scope="daily">流日</button>
@@ -546,7 +554,7 @@
     `;
     chartGrid.appendChild(centerInfo);
 
-    horoscopeState = { yearly: false, monthly: false, daily: false };
+    horoscopeState = { decadal: false, yearly: false, monthly: false, daily: false };
     centerInfo.querySelectorAll('.horoscope-toggle').forEach((btn) => {
       btn.addEventListener('click', () => {
         const scope = btn.dataset.scope;
@@ -618,6 +626,7 @@
       const horoscope = {
         solarDate: horoscopeRaw.solarDate,
         lunarDate: horoscopeRaw.lunarDate,
+        decadal: simplifyHoroscopeItem(horoscopeRaw.decadal),
         yearly: simplifyHoroscopeItem(horoscopeRaw.yearly),
         monthly: simplifyHoroscopeItem(horoscopeRaw.monthly),
         daily: simplifyHoroscopeItem(horoscopeRaw.daily),
@@ -641,6 +650,13 @@
     if (legendEl) legendEl.innerHTML = '';
   }
 
+  function getDecadalRangeText(scope, item) {
+    if (scope !== 'decadal' || !currentAstrolabe) return '';
+    const palace = currentAstrolabe.palaces.find((p) => p.index === item.index);
+    if (!palace || !palace.decadalRange) return '';
+    return `　${palace.decadalRange[0]}-${palace.decadalRange[1]}歲`;
+  }
+
   function renderHoroscopeOverlay(horoscope, activeScopes) {
     clearHoroscopeOverlay();
 
@@ -654,8 +670,9 @@
       const mutagenText = (item.mutagen || [])
         .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
         .join(' ');
+      const ageRangeText = getDecadalRangeText(scope, item);
       legendLines.push(
-        `<div style="color:${cfg.color}">${escapeHtml(cfg.label)}四化（${escapeHtml(item.heavenlyStem || '')}${escapeHtml(item.earthlyBranch || '')}）：${escapeHtml(mutagenText)}</div>`
+        `<div style="color:${cfg.color}">${escapeHtml(cfg.label)}四化（${escapeHtml(item.heavenlyStem || '')}${escapeHtml(item.earthlyBranch || '')}${ageRangeText}）：${escapeHtml(mutagenText)}</div>`
       );
 
       (item.palaceNames || []).forEach((name, idx) => {
@@ -718,8 +735,15 @@
         const mutagenText = (item.mutagen || [])
           .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
           .join('、');
+        let ageRangeText = '';
+        if (scope === 'decadal') {
+          const decadalPalace = (astrolabe.palaces || []).find((p) => p.index === item.index);
+          if (decadalPalace && decadalPalace.decadalRange) {
+            ageRangeText = `　${decadalPalace.decadalRange[0]}-${decadalPalace.decadalRange[1]}歲`;
+          }
+        }
 
-        lines.push(`${cfg.label}（${item.heavenlyStem || ''}${item.earthlyBranch || ''}）四化：${mutagenText}`);
+        lines.push(`${cfg.label}（${item.heavenlyStem || ''}${item.earthlyBranch || ''}${ageRangeText}）四化：${mutagenText}`);
 
         (item.palaceNames || []).forEach((name, idx) => {
           const palace = (astrolabe.palaces || []).find((p) => p.index === idx);
