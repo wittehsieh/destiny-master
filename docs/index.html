@@ -426,7 +426,7 @@
     </div>
   </div>
 
-  <div class="panel plain-text-panel">
+  <div class="panel plain-text-panel hidden" id="plain-text-panel">
     <div class="plain-text-header">
       <h2>純文字結果（複製給 AI 用）</h2>
       <button type="button" id="copy-plain-text">複製到剪貼簿</button>
@@ -442,6 +442,7 @@
   const errorMsg = document.getElementById('error-msg');
   const chartGrid = document.getElementById('chart-grid');
   const palaceInfoPanel = document.getElementById('palace-info-panel');
+  const plainTextPanel = document.getElementById('plain-text-panel');
   const hourSelect = document.getElementById('hour');
   const plainTextOutput = document.getElementById('plain-text-output');
 
@@ -692,6 +693,7 @@
       errorMsg.classList.remove('hidden');
       chartGrid.classList.add('hidden');
       palaceInfoPanel.classList.add('hidden');
+      plainTextPanel.classList.add('hidden');
     }
   });
 
@@ -699,6 +701,7 @@
     chartGrid.innerHTML = '';
     chartGrid.classList.remove('hidden');
     palaceInfoPanel.classList.remove('hidden');
+    plainTextPanel.classList.remove('hidden');
 
     const centerInfo = document.createElement('div');
     centerInfo.className = 'center-info';
