@@ -323,7 +323,7 @@
 
   <div class="chart-wrap">
     <div class="chart-grid hidden" id="chart-grid"></div>
-    <div class="panel palace-info-panel">
+    <div class="panel palace-info-panel hidden" id="palace-info-panel">
       <h2>宮位說明</h2>
       <div id="palace-info-content">將游標移到宮位上查看該宮對人生的影響</div>
     </div>
@@ -341,6 +341,7 @@
   const form = document.getElementById('chart-form');
   const errorMsg = document.getElementById('error-msg');
   const chartGrid = document.getElementById('chart-grid');
+  const palaceInfoPanel = document.getElementById('palace-info-panel');
   const hourSelect = document.getElementById('hour');
   const plainTextOutput = document.getElementById('plain-text-output');
 
@@ -519,12 +520,14 @@
       errorMsg.textContent = err.message || '排盤失敗';
       errorMsg.classList.remove('hidden');
       chartGrid.classList.add('hidden');
+      palaceInfoPanel.classList.add('hidden');
     }
   });
 
   function renderChart(astrolabe) {
     chartGrid.innerHTML = '';
     chartGrid.classList.remove('hidden');
+    palaceInfoPanel.classList.remove('hidden');
 
     const centerInfo = document.createElement('div');
     centerInfo.className = 'center-info';
