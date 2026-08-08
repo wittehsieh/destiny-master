@@ -262,12 +262,63 @@
   }
 
   @media (max-width: 640px) {
-    .chart-grid {
-      grid-template-rows: repeat(4, minmax(90px, auto));
+    body { padding: 10px; }
+    .panel { padding: 12px; }
+
+    /* 輸入資訊區、命盤區、說明區、純文字區：填滿左右、垂直依序排列 */
+    .chart-wrap {
+      flex-direction: column;
+      gap: 10px;
     }
-    .palace { font-size: 0.6rem; padding: 4px; }
-    .palace-name { font-size: 0.72rem; }
-    .center-info { font-size: 0.65rem; padding: 6px; }
+    .chart-grid,
+    .palace-info-panel {
+      flex-basis: auto;
+      width: 100%;
+      max-width: 100%;
+    }
+    .palace-info-panel {
+      position: static;
+    }
+
+    .chart-grid {
+      /* 由內容決定高度，避免 aspect-ratio 硬性壓縮造成文字重疊/裁切 */
+      aspect-ratio: auto;
+      grid-template-rows: repeat(4, minmax(0, auto));
+      gap: 3px;
+    }
+    .palace {
+      font-size: 0.62rem;
+      padding: 4px 3px;
+      overflow: visible;
+      word-break: break-word;
+    }
+    .palace-header {
+      flex-wrap: wrap;
+      row-gap: 2px;
+    }
+    .palace-name { font-size: 0.7rem; }
+    .palace-stem-branch { font-size: 0.6rem; }
+    .brightness { font-size: 0.56rem; }
+    .mutagen { font-size: 0.52rem; padding: 0 2px; }
+    .adjective-star { font-size: 0.56rem; }
+    .body-tag { font-size: 0.56rem; }
+
+    .center-info { font-size: 0.66rem; padding: 8px; gap: 4px; }
+    .horoscope-toggle { font-size: 0.66rem; padding: 3px 8px; }
+    #horoscope-legend { font-size: 0.58rem; }
+    .horoscope-tag { font-size: 0.54rem; }
+
+    #palace-info-content { font-size: 0.8rem; }
+  }
+
+  @media (max-width: 400px) {
+    .palace { font-size: 0.56rem; padding: 3px 2px; }
+    .palace-name { font-size: 0.64rem; }
+    .palace-stem-branch { font-size: 0.54rem; }
+    .brightness { font-size: 0.5rem; }
+    .mutagen { font-size: 0.48rem; }
+    .adjective-star { font-size: 0.5rem; }
+    .chart-grid { gap: 2px; }
   }
 
   .plain-text-panel h2 {
