@@ -64,6 +64,42 @@
   #year { flex: 1.3; }
   #month { flex: 1; }
   #day { flex: 1; }
+
+  .location-select-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .location-select-row select {
+    flex: 1;
+    min-width: 0;
+  }
+  #citySearch {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  #city {
+    width: 100%;
+  }
+  .solar-time-panel {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 16px;
+    font-size: 0.85rem;
+  }
+  .solar-time-panel span.label {
+    color: var(--gold);
+    margin-right: 4px;
+  }
+  @media (max-width: 640px) {
+    .solar-time-panel {
+      grid-template-columns: 1fr;
+    }
+  }
   input, select {
     background: var(--bg);
     color: var(--text);
@@ -399,8 +435,8 @@
         <label for="isLeapMonth">閏月</label>
       </div>
       <div class="field">
-        <label for="hour">時辰</label>
-        <select id="hour" required></select>
+        <label for="birthTime">出生時間</label>
+        <input type="time" id="birthTime" value="12:00" required />
       </div>
       <div class="field">
         <label for="gender">性別</label>
@@ -409,9 +445,22 @@
           <option value="男">男</option>
         </select>
       </div>
-      <div class="field checkbox">
-        <input type="checkbox" id="useTrueSolarTime" checked />
-        <label for="useTrueSolarTime">真太陽時</label>
+      <div class="field full-width">
+        <label>出生地</label>
+        <div class="location-select-row">
+          <select id="continent" required></select>
+          <select id="country" required></select>
+        </div>
+        <input type="text" id="citySearch" placeholder="🔍 搜尋城市" autocomplete="off" />
+        <select id="city" required></select>
+      </div>
+      <div class="field full-width">
+        <div class="solar-time-panel" id="solar-time-panel">
+          <div><span class="label">出生時間</span><span id="result-civil-time">--</span></div>
+          <div><span class="label">出生地</span><span id="result-location">--</span></div>
+          <div><span class="label">真太陽時</span><span id="result-true-solar">請選擇出生地</span></div>
+          <div><span class="label">時間修正</span><span id="result-correction">--</span></div>
+        </div>
       </div>
       <button type="submit">開始排盤</button>
     </form>
@@ -435,6 +484,9 @@
   </div>
 
 <script src="iztro.min.js"></script>
+<script src="astronomy.browser.min.js"></script>
+<script src="location-data.js"></script>
+<script src="solar-time.js"></script>
 <script>
   const dateTypeSelect = document.getElementById('dateType');
   const leapField = document.getElementById('leap-field');
@@ -443,7 +495,6 @@
   const chartGrid = document.getElementById('chart-grid');
   const palaceInfoPanel = document.getElementById('palace-info-panel');
   const plainTextPanel = document.getElementById('plain-text-panel');
-  const hourSelect = document.getElementById('hour');
   const plainTextOutput = document.getElementById('plain-text-output');
 
   dateTypeSelect.addEventListener('change', () => {
@@ -518,9 +569,169 @@
     { value: 12, branch: '晚子', range: '23:00–00:00' },
   ];
 
-  hourSelect.innerHTML = HOUR_OPTIONS.map((opt) =>
-    `<option value="${opt.value}">${opt.branch}時（${opt.range}）</option>`
-  ).join('');
+  // ---- 出生地選擇（洲 -> 國家 -> 城市）與真太陽時計算 ----
+
+  const continentSelect = document.getElementById('continent');
+  const countrySelect = document.getElementById('country');
+  const citySelect = document.getElementById('city');
+  const citySearchInput = document.getElementById('citySearch');
+  const birthTimeInput = document.getElementById('birthTime');
+  const resultCivilTime = document.getElementById('result-civil-time');
+  const resultLocation = document.getElementById('result-location');
+  const resultTrueSolar = document.getElementById('result-true-solar');
+  const resultCorrection = document.getElementById('result-correction');
+
+  const CONTINENT_ORDER = ['Asia', 'Europe', 'North America', 'South America', 'Africa', 'Oceania'];
+
+  function uniqueBy(rows, keyFn) {
+    const seen = new Map();
+    rows.forEach((row) => {
+      const key = keyFn(row);
+      if (!seen.has(key)) seen.set(key, row);
+    });
+    return [...seen.values()];
+  }
+
+  function populateContinents() {
+    const present = new Set(window.LOCATION_DATA.map((r) => r[0]));
+    const continents = CONTINENT_ORDER.filter((c) => present.has(c));
+    continentSelect.innerHTML = continents
+      .map((c) => {
+        const row = window.LOCATION_DATA.find((r) => r[0] === c);
+        return `<option value="${c}">${row[1]}</option>`;
+      })
+      .join('');
+  }
+
+  function populateCountries(preferredCountry) {
+    const rows = window.LOCATION_DATA.filter((r) => r[0] === continentSelect.value);
+    const countries = uniqueBy(rows, (r) => r[2])
+      .sort((a, b) => a[3].localeCompare(b[3], 'zh-Hant'));
+    countrySelect.innerHTML = countries
+      .map((r) => `<option value="${r[2]}">${r[3]}</option>`)
+      .join('');
+    if (preferredCountry && countries.some((r) => r[2] === preferredCountry)) {
+      countrySelect.value = preferredCountry;
+    }
+  }
+
+  function populateCities(preferredCity) {
+    const searchTerm = citySearchInput.value.trim().toLowerCase();
+    const rows = window.LOCATION_DATA
+      .map((r, idx) => ({ row: r, idx }))
+      .filter(({ row }) => row[0] === continentSelect.value && row[2] === countrySelect.value)
+      .filter(({ row }) => !searchTerm || row[4].toLowerCase().includes(searchTerm) || row[5].toLowerCase().includes(searchTerm));
+
+    citySelect.innerHTML = rows
+      .map(({ row, idx }) => `<option value="${idx}">${row[5]}</option>`)
+      .join('');
+
+    if (rows.length === 0) return;
+    const preferredIdx = rows.find(({ row }) => row[4] === preferredCity);
+    citySelect.value = preferredIdx ? String(preferredIdx.idx) : String(rows[0].idx);
+  }
+
+  function getSelectedLocation() {
+    const idx = Number(citySelect.value);
+    const row = window.LOCATION_DATA[idx];
+    if (!row) return null;
+    return {
+      continent: row[0], continentZh: row[1],
+      country: row[2], countryZh: row[3],
+      city: row[4], cityZh: row[5],
+      province: row[6], latitude: row[7], longitude: row[8], timezoneId: row[9],
+    };
+  }
+
+  let lastSolarTimeResult = null;
+
+  function resolveGregorianBirthDate() {
+    const year = Number(yearSelect.value);
+    const month = Number(monthSelect.value);
+    const day = Number(daySelect.value);
+    if (dateTypeSelect.value !== 'lunar') {
+      return { year, month, day };
+    }
+    // Lunar date selected: resolve to the equivalent Gregorian date first,
+    // since true solar time needs a real Gregorian calendar date. This
+    // reuses the existing (unmodified) chart engine purely to read back
+    // its resolved `.solarDate` -- it does not affect the actual chart.
+    const isLeapMonth = document.getElementById('isLeapMonth').checked;
+    const astrolabeRaw = computeAstrolabe({
+      dateType: 'lunar',
+      date: `${year}-${month}-${day}`,
+      hour: 0,
+      gender: '女',
+      isLeapMonth,
+      useTrueSolarTime: false,
+      lang: 'zh-TW',
+    });
+    const [sy, sm, sd] = astrolabeRaw.solarDate.split('-').map(Number);
+    return { year: sy, month: sm, day: sd };
+  }
+
+  function recomputeSolarTime() {
+    const location = getSelectedLocation();
+    const timeValue = birthTimeInput.value;
+
+    resultCivilTime.textContent = `${yearSelect.value}/${monthSelect.value}/${daySelect.value} ${timeValue || '--:--'}`;
+    resultLocation.textContent = location ? `${location.countryZh}・${location.cityZh}` : '--';
+
+    if (!location || !timeValue) {
+      resultTrueSolar.textContent = location ? '請輸入出生時間' : '請選擇出生地';
+      resultCorrection.textContent = '--';
+      lastSolarTimeResult = null;
+      return;
+    }
+
+    const [hh, mm] = timeValue.split(':').map(Number);
+
+    try {
+      const birthDate = resolveGregorianBirthDate();
+      const result = SolarTime.calculateTrueSolarTime(birthDate, { hour: hh, minute: mm }, location);
+      const tsH = String(result.trueSolarHour).padStart(2, '0');
+      const tsM = String(result.trueSolarMinute).padStart(2, '0');
+      const hourOpt = HOUR_OPTIONS.find((o) => o.value === result.hourIndex);
+
+      resultTrueSolar.textContent = `${tsH}:${tsM}${hourOpt ? `（${hourOpt.branch}時）` : ''}`;
+      resultCorrection.textContent = `${result.correctionMinutes >= 0 ? '+' : ''}${result.correctionMinutes} 分鐘`;
+      lastSolarTimeResult = result;
+    } catch (err) {
+      resultTrueSolar.textContent = '計算失敗：' + (err.message || '');
+      resultCorrection.textContent = '--';
+      lastSolarTimeResult = null;
+    }
+  }
+
+  populateContinents();
+  continentSelect.value = 'Asia';
+  populateCountries('Taiwan');
+  populateCities('Taipei');
+
+  continentSelect.addEventListener('change', () => {
+    populateCountries();
+    citySearchInput.value = '';
+    populateCities();
+    recomputeSolarTime();
+  });
+  countrySelect.addEventListener('change', () => {
+    citySearchInput.value = '';
+    populateCities();
+    recomputeSolarTime();
+  });
+  citySearchInput.addEventListener('input', () => {
+    populateCities();
+    recomputeSolarTime();
+  });
+  citySelect.addEventListener('change', recomputeSolarTime);
+  birthTimeInput.addEventListener('input', recomputeSolarTime);
+  yearSelect.addEventListener('change', recomputeSolarTime);
+  monthSelect.addEventListener('change', recomputeSolarTime);
+  daySelect.addEventListener('change', recomputeSolarTime);
+  dateTypeSelect.addEventListener('change', recomputeSolarTime);
+  document.getElementById('isLeapMonth').addEventListener('change', recomputeSolarTime);
+
+  recomputeSolarTime();
 
   plainTextOutput.addEventListener('focus', () => plainTextOutput.select());
 
@@ -550,6 +761,7 @@
   let currentPayload = null;
   let currentAstrolabe = null;
   let currentHourOption = null;
+  let currentSolarTimeInfo = null;
   let horoscopeState = { decadal: false, yearly: false, monthly: false, daily: false };
 
   const SCOPE_CONFIG = {
@@ -666,7 +878,13 @@
     e.preventDefault();
     errorMsg.classList.add('hidden');
 
-    const hourValue = Number(hourSelect.value);
+    if (!lastSolarTimeResult) {
+      errorMsg.textContent = '請完整選擇出生地與出生時間，系統才能算出真太陽時';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
+
+    const hourValue = lastSolarTimeResult.hourIndex;
     const hourOption = HOUR_OPTIONS.find((opt) => opt.value === hourValue);
 
     const payload = {
@@ -675,7 +893,8 @@
       hour: hourValue,
       gender: document.getElementById('gender').value,
       isLeapMonth: document.getElementById('isLeapMonth').checked,
-      useTrueSolarTime: document.getElementById('useTrueSolarTime').checked,
+      // 已經自行用真太陽時修正過 hour，不要讓 iztro 再套用一次簡化版修正
+      useTrueSolarTime: false,
       lang: 'zh-TW',
     };
 
@@ -686,6 +905,7 @@
       currentPayload = payload;
       currentAstrolabe = astrolabe;
       currentHourOption = hourOption;
+      currentSolarTimeInfo = { location: getSelectedLocation(), result: lastSolarTimeResult, civilTime: birthTimeInput.value };
       renderChart(astrolabe);
       refreshPlainText(null, []);
     } catch (err) {
@@ -874,7 +1094,15 @@
     lines.push(`生肖：${astrolabe.zodiac || ''}　星座：${astrolabe.sign || ''}`);
     lines.push(`五行局：${astrolabe.fiveElementsClass || ''}`);
     lines.push(`命主：${astrolabe.soul || ''}　身主：${astrolabe.body || ''}`);
-    lines.push(`真太陽時：${payload.useTrueSolarTime ? '是' : '否'}`);
+    if (currentSolarTimeInfo && currentSolarTimeInfo.location) {
+      const loc = currentSolarTimeInfo.location;
+      const r = currentSolarTimeInfo.result;
+      const tsH = String(r.trueSolarHour).padStart(2, '0');
+      const tsM = String(r.trueSolarMinute).padStart(2, '0');
+      lines.push(`出生地：${loc.countryZh}・${loc.cityZh}（經度 ${loc.longitude}, 時區 ${loc.timezoneId}）`);
+      lines.push(`民用時間：${currentSolarTimeInfo.civilTime || ''}`);
+      lines.push(`真太陽時：${tsH}:${tsM}（時間修正 ${r.correctionMinutes >= 0 ? '+' : ''}${r.correctionMinutes} 分鐘）`);
+    }
     lines.push('');
     lines.push('【十二宮】');
 
