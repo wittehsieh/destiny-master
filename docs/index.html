@@ -367,46 +367,21 @@
     .chart-grid { gap: 2px; }
   }
 
-  .plain-text-panel .plain-text-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .plain-text-panel h2 {
-    font-size: 1rem;
-    color: var(--gold);
-    margin: 0;
-  }
-  #copy-plain-text {
+  .copy-chart-btn {
     background: transparent;
     color: var(--gold);
     border: 1px solid var(--gold);
     border-radius: 4px;
-    padding: 5px 12px;
-    font-size: 0.8rem;
+    padding: 4px 10px;
+    font-size: 0.72rem;
     font-weight: normal;
+    cursor: pointer;
     white-space: nowrap;
   }
-  #copy-plain-text:hover { opacity: 0.85; }
-  #copy-plain-text.copied {
+  .copy-chart-btn:hover { opacity: 0.85; }
+  .copy-chart-btn.copied {
     background: var(--gold);
     color: #1a1a1a;
-  }
-  #plain-text-output {
-    width: 100%;
-    min-height: 260px;
-    resize: vertical;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    white-space: pre;
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px;
   }
 </style>
 </head>
@@ -478,14 +453,6 @@
     </div>
   </div>
 
-  <div class="panel plain-text-panel hidden" id="plain-text-panel">
-    <div class="plain-text-header">
-      <h2>純文字結果（複製給 AI 用）</h2>
-      <button type="button" id="copy-plain-text">複製到剪貼簿</button>
-    </div>
-    <textarea id="plain-text-output" readonly placeholder="排盤後會在這裡顯示純文字結果"></textarea>
-  </div>
-
 <script src="iztro.min.js"></script>
 <script src="astronomy.browser.min.js"></script>
 <script src="location-data.js"></script>
@@ -497,8 +464,6 @@
   const errorMsg = document.getElementById('error-msg');
   const chartGrid = document.getElementById('chart-grid');
   const palaceInfoPanel = document.getElementById('palace-info-panel');
-  const plainTextPanel = document.getElementById('plain-text-panel');
-  const plainTextOutput = document.getElementById('plain-text-output');
 
   dateTypeSelect.addEventListener('change', () => {
     leapField.classList.toggle('hidden', dateTypeSelect.value !== 'lunar');
@@ -757,35 +722,23 @@
 
   recomputeSolarTime();
 
-  plainTextOutput.addEventListener('focus', () => plainTextOutput.select());
-
-  const copyPlainTextBtn = document.getElementById('copy-plain-text');
-  copyPlainTextBtn.addEventListener('click', async () => {
-    if (!plainTextOutput.value) return;
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(plainTextOutput.value);
-      } else {
-        plainTextOutput.select();
-        document.execCommand('copy');
-      }
-      copyPlainTextBtn.textContent = '已複製 ✓';
-      copyPlainTextBtn.classList.add('copied');
-    } catch (err) {
-      copyPlainTextBtn.textContent = '複製失敗';
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
     }
-
-    setTimeout(() => {
-      copyPlainTextBtn.textContent = '複製到剪貼簿';
-      copyPlainTextBtn.classList.remove('copied');
-    }, 1500);
-  });
+  }
 
   let currentPayload = null;
   let currentAstrolabe = null;
-  let currentHourOption = null;
-  let currentSolarTimeInfo = null;
   let horoscopeState = { decadal: false, yearly: false, monthly: false, daily: false };
 
   const SCOPE_CONFIG = {
@@ -909,7 +862,6 @@
     }
 
     const hourValue = lastSolarTimeResult.hourIndex;
-    const hourOption = HOUR_OPTIONS.find((opt) => opt.value === hourValue);
 
     const payload = {
       dateType: dateTypeSelect.value,
@@ -928,16 +880,12 @@
 
       currentPayload = payload;
       currentAstrolabe = astrolabe;
-      currentHourOption = hourOption;
-      currentSolarTimeInfo = { location: getSelectedLocation(), result: lastSolarTimeResult, civilTime: getBirthTimeString() };
       renderChart(astrolabe);
-      refreshPlainText(null, []);
     } catch (err) {
       errorMsg.textContent = err.message || '排盤失敗';
       errorMsg.classList.remove('hidden');
       chartGrid.classList.add('hidden');
       palaceInfoPanel.classList.add('hidden');
-      plainTextPanel.classList.add('hidden');
     }
   });
 
@@ -945,7 +893,6 @@
     chartGrid.innerHTML = '';
     chartGrid.classList.remove('hidden');
     palaceInfoPanel.classList.remove('hidden');
-    plainTextPanel.classList.remove('hidden');
 
     const centerInfo = document.createElement('div');
     centerInfo.className = 'center-info';
@@ -962,6 +909,7 @@
         <button type="button" class="horoscope-toggle" data-scope="daily">流日</button>
       </div>
       <div id="horoscope-legend"></div>
+      <button type="button" class="copy-chart-btn" id="copy-chart-btn">📋 一鍵複製（命盤＋大限流年流月流日）</button>
     `;
     chartGrid.appendChild(centerInfo);
 
@@ -973,6 +921,29 @@
         btn.classList.toggle('active', horoscopeState[scope]);
         updateHoroscopeOverlay();
       });
+    });
+
+    const copyChartBtn = centerInfo.querySelector('#copy-chart-btn');
+    copyChartBtn.addEventListener('click', async () => {
+      try {
+        const astrolabeRaw = computeAstrolabe(currentPayload);
+        const horoscopeRaw = astrolabeRaw.horoscope();
+        const horoscope = {
+          decadal: simplifyHoroscopeItem(horoscopeRaw.decadal),
+          yearly: simplifyHoroscopeItem(horoscopeRaw.yearly),
+          monthly: simplifyHoroscopeItem(horoscopeRaw.monthly),
+          daily: simplifyHoroscopeItem(horoscopeRaw.daily),
+        };
+        await copyTextToClipboard(formatChartText(astrolabe, horoscope));
+        copyChartBtn.textContent = '已複製 ✓';
+        copyChartBtn.classList.add('copied');
+      } catch (err) {
+        copyChartBtn.textContent = '複製失敗';
+      }
+      setTimeout(() => {
+        copyChartBtn.textContent = '📋 一鍵複製（命盤＋大限流年流月流日）';
+        copyChartBtn.classList.remove('copied');
+      }, 1500);
     });
 
     (astrolabe.palaces || []).forEach((palace) => {
@@ -1026,7 +997,6 @@
 
     if (activeScopes.length === 0) {
       clearHoroscopeOverlay();
-      refreshPlainText(null, []);
       return;
     }
     if (!currentPayload) return;
@@ -1043,16 +1013,10 @@
         daily: simplifyHoroscopeItem(horoscopeRaw.daily),
       };
       renderHoroscopeOverlay(horoscope, activeScopes);
-      refreshPlainText(horoscope, activeScopes);
     } catch (err) {
       errorMsg.textContent = err.message || '運限計算失敗';
       errorMsg.classList.remove('hidden');
     }
-  }
-
-  function refreshPlainText(horoscope, activeScopes) {
-    if (!currentAstrolabe || !currentPayload) return;
-    plainTextOutput.value = formatPlainText(currentAstrolabe, currentPayload, currentHourOption, horoscope, activeScopes);
   }
 
   function clearHoroscopeOverlay() {
@@ -1107,27 +1071,8 @@
     if (legendEl) legendEl.innerHTML = legendLines.join('');
   }
 
-  function formatPlainText(astrolabe, payload, hourOption, horoscope, activeScopes) {
+  function formatChartText(astrolabe, horoscope) {
     const lines = [];
-    lines.push('【紫微斗數命盤】');
-    lines.push(`性別：${astrolabe.gender || ''}`);
-    lines.push(`陽曆：${astrolabe.solarDate || ''}`);
-    lines.push(`農曆：${astrolabe.lunarDate || ''}`);
-    lines.push(`干支：${astrolabe.chineseDate || ''}`);
-    lines.push(`時辰：${hourOption ? `${hourOption.branch}時 (${hourOption.range})` : ''}`);
-    lines.push(`生肖：${astrolabe.zodiac || ''}　星座：${astrolabe.sign || ''}`);
-    lines.push(`五行局：${astrolabe.fiveElementsClass || ''}`);
-    lines.push(`命主：${astrolabe.soul || ''}　身主：${astrolabe.body || ''}`);
-    if (currentSolarTimeInfo && currentSolarTimeInfo.location) {
-      const loc = currentSolarTimeInfo.location;
-      const r = currentSolarTimeInfo.result;
-      const tsH = String(r.trueSolarHour).padStart(2, '0');
-      const tsM = String(r.trueSolarMinute).padStart(2, '0');
-      lines.push(`出生地：${loc.countryZh}・${loc.cityZh}（經度 ${loc.longitude}, 時區 ${loc.timezoneId}）`);
-      lines.push(`民用時間：${currentSolarTimeInfo.civilTime || ''}`);
-      lines.push(`真太陽時：${tsH}:${tsM}（時間修正 ${r.correctionMinutes >= 0 ? '+' : ''}${r.correctionMinutes} 分鐘）`);
-    }
-    lines.push('');
     lines.push('【十二宮】');
 
     (astrolabe.palaces || []).forEach((palace) => {
@@ -1143,42 +1088,40 @@
       if (adjective) lines.push(`  雜曜：${adjective}`);
     });
 
-    if (horoscope && activeScopes && activeScopes.length) {
-      lines.push('');
-      lines.push('【運限】');
+    lines.push('');
+    lines.push('【運限】');
 
-      activeScopes.forEach((scope) => {
-        const item = horoscope[scope];
-        if (!item) return;
-        const cfg = SCOPE_CONFIG[scope];
-        const mutagenText = (item.mutagen || [])
-          .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
-          .join('、');
-        let ageRangeText = '';
-        if (scope === 'decadal') {
-          const decadalPalace = (astrolabe.palaces || []).find((p) => p.index === item.index);
-          if (decadalPalace && decadalPalace.decadalRange) {
-            ageRangeText = `　${decadalPalace.decadalRange[0]}-${decadalPalace.decadalRange[1]}歲`;
-          }
+    ['decadal', 'yearly', 'monthly', 'daily'].forEach((scope) => {
+      const item = horoscope[scope];
+      if (!item) return;
+      const cfg = SCOPE_CONFIG[scope];
+      const mutagenText = (item.mutagen || [])
+        .map((name, i) => `${name}${MUTAGEN_LABELS[i] || ''}`)
+        .join('、');
+      let ageRangeText = '';
+      if (scope === 'decadal') {
+        const decadalPalace = (astrolabe.palaces || []).find((p) => p.index === item.index);
+        if (decadalPalace && decadalPalace.decadalRange) {
+          ageRangeText = `　${decadalPalace.decadalRange[0]}-${decadalPalace.decadalRange[1]}歲`;
         }
+      }
 
-        lines.push(`${cfg.label}（${item.heavenlyStem || ''}${item.earthlyBranch || ''}${ageRangeText}）四化：${mutagenText}`);
+      lines.push(`${cfg.label}（${item.heavenlyStem || ''}${item.earthlyBranch || ''}${ageRangeText}）四化：${mutagenText}`);
 
-        (item.palaceNames || []).forEach((name, idx) => {
-          const palace = (astrolabe.palaces || []).find((p) => p.index === idx);
-          const stemBranch = palace ? `${palace.heavenlyStem || ''}${palace.earthlyBranch || ''}` : '';
-          const starsForPalace = (item.stars && item.stars[idx]) || [];
-          const starsText = starsForPalace
-            .map((s) => `${s.name}${s.mutagen ? `[${s.mutagen}]` : ''}`)
-            .join('、');
+      (item.palaceNames || []).forEach((name, idx) => {
+        const palace = (astrolabe.palaces || []).find((p) => p.index === idx);
+        const stemBranch = palace ? `${palace.heavenlyStem || ''}${palace.earthlyBranch || ''}` : '';
+        const starsForPalace = (item.stars && item.stars[idx]) || [];
+        const starsText = starsForPalace
+          .map((s) => `${s.name}${s.mutagen ? `[${s.mutagen}]` : ''}`)
+          .join('、');
 
-          lines.push(`  ${stemBranch}　${cfg.label}${name}${starsText ? `　流耀：${starsText}` : ''}`);
-        });
-        lines.push('');
+        lines.push(`  ${stemBranch}　${cfg.label}${name}${starsText ? `　流耀：${starsText}` : ''}`);
       });
-    }
+      lines.push('');
+    });
 
-    return lines.join('\n');
+    return lines.join('\n').trim();
   }
 
   function escapeHtml(str) {
