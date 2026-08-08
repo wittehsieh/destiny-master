@@ -435,8 +435,11 @@
         <label for="isLeapMonth">閏月</label>
       </div>
       <div class="field">
-        <label for="birthTime">出生時間</label>
-        <input type="time" id="birthTime" value="12:00" required />
+        <label>出生時間</label>
+        <div class="date-select-row">
+          <select id="birthHour" required></select>
+          <select id="birthMinute" required></select>
+        </div>
       </div>
       <div class="field">
         <label for="gender">性別</label>
@@ -575,11 +578,31 @@
   const countrySelect = document.getElementById('country');
   const citySelect = document.getElementById('city');
   const citySearchInput = document.getElementById('citySearch');
-  const birthTimeInput = document.getElementById('birthTime');
+  const birthHourSelect = document.getElementById('birthHour');
+  const birthMinuteSelect = document.getElementById('birthMinute');
   const resultCivilTime = document.getElementById('result-civil-time');
   const resultLocation = document.getElementById('result-location');
   const resultTrueSolar = document.getElementById('result-true-solar');
   const resultCorrection = document.getElementById('result-correction');
+
+  for (let h = 0; h < 24; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = `${String(h).padStart(2, '0')} 時`;
+    birthHourSelect.appendChild(opt);
+  }
+  for (let m = 0; m < 60; m++) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = `${String(m).padStart(2, '0')} 分`;
+    birthMinuteSelect.appendChild(opt);
+  }
+  birthHourSelect.value = 12;
+  birthMinuteSelect.value = 0;
+
+  function getBirthTimeString() {
+    return `${String(birthHourSelect.value).padStart(2, '0')}:${String(birthMinuteSelect.value).padStart(2, '0')}`;
+  }
 
   const CONTINENT_ORDER = ['Asia', 'Europe', 'North America', 'South America', 'Africa', 'Oceania'];
 
@@ -672,7 +695,7 @@
 
   function recomputeSolarTime() {
     const location = getSelectedLocation();
-    const timeValue = birthTimeInput.value;
+    const timeValue = getBirthTimeString();
 
     resultCivilTime.textContent = `${yearSelect.value}/${monthSelect.value}/${daySelect.value} ${timeValue || '--:--'}`;
     resultLocation.textContent = location ? `${location.countryZh}・${location.cityZh}` : '--';
@@ -724,7 +747,8 @@
     recomputeSolarTime();
   });
   citySelect.addEventListener('change', recomputeSolarTime);
-  birthTimeInput.addEventListener('input', recomputeSolarTime);
+  birthHourSelect.addEventListener('change', recomputeSolarTime);
+  birthMinuteSelect.addEventListener('change', recomputeSolarTime);
   yearSelect.addEventListener('change', recomputeSolarTime);
   monthSelect.addEventListener('change', recomputeSolarTime);
   daySelect.addEventListener('change', recomputeSolarTime);
@@ -905,7 +929,7 @@
       currentPayload = payload;
       currentAstrolabe = astrolabe;
       currentHourOption = hourOption;
-      currentSolarTimeInfo = { location: getSelectedLocation(), result: lastSolarTimeResult, civilTime: birthTimeInput.value };
+      currentSolarTimeInfo = { location: getSelectedLocation(), result: lastSolarTimeResult, civilTime: getBirthTimeString() };
       renderChart(astrolabe);
       refreshPlainText(null, []);
     } catch (err) {
