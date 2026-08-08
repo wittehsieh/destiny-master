@@ -321,10 +321,32 @@
     .chart-grid { gap: 2px; }
   }
 
+  .plain-text-panel .plain-text-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
   .plain-text-panel h2 {
     font-size: 1rem;
     color: var(--gold);
-    margin: 0 0 10px;
+    margin: 0;
+  }
+  #copy-plain-text {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: normal;
+    white-space: nowrap;
+  }
+  #copy-plain-text:hover { opacity: 0.85; }
+  #copy-plain-text.copied {
+    background: var(--gold);
+    color: #1a1a1a;
   }
   #plain-text-output {
     width: 100%;
@@ -386,7 +408,10 @@
   </div>
 
   <div class="panel plain-text-panel">
-    <h2>純文字結果（複製給 AI 用）</h2>
+    <div class="plain-text-header">
+      <h2>純文字結果（複製給 AI 用）</h2>
+      <button type="button" id="copy-plain-text">複製到剪貼簿</button>
+    </div>
     <textarea id="plain-text-output" readonly placeholder="排盤後會在這裡顯示純文字結果"></textarea>
   </div>
 
@@ -426,6 +451,29 @@
   ).join('');
 
   plainTextOutput.addEventListener('focus', () => plainTextOutput.select());
+
+  const copyPlainTextBtn = document.getElementById('copy-plain-text');
+  copyPlainTextBtn.addEventListener('click', async () => {
+    if (!plainTextOutput.value) return;
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(plainTextOutput.value);
+      } else {
+        plainTextOutput.select();
+        document.execCommand('copy');
+      }
+      copyPlainTextBtn.textContent = '已複製 ✓';
+      copyPlainTextBtn.classList.add('copied');
+    } catch (err) {
+      copyPlainTextBtn.textContent = '複製失敗';
+    }
+
+    setTimeout(() => {
+      copyPlainTextBtn.textContent = '複製到剪貼簿';
+      copyPlainTextBtn.classList.remove('copied');
+    }, 1500);
+  });
 
   let currentPayload = null;
   let currentAstrolabe = null;
