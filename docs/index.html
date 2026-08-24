@@ -1443,10 +1443,12 @@
     const raw = LunarTS.LunarUtil.SHI_SHEN[dayGan + targetGan];
     return raw ? toTraditional(raw) : '';
   }
+  // 地支藏干可能有 1~3 個，每個藏干各自對應一個十神，所以要全部列出，
+  // 不能只取本氣（第一個）。
   function shishenForZhi(dayGan, zhi) {
     if (!zhi) return '';
-    const hideGan = LunarTS.LunarUtil.ZHI_HIDE_GAN[zhi];
-    return shishenForGan(dayGan, hideGan && hideGan[0]);
+    const hideGan = LunarTS.LunarUtil.ZHI_HIDE_GAN[zhi] || [];
+    return hideGan.map((g) => shishenForGan(dayGan, g)).filter(Boolean).join('、');
   }
 
   function getBaziGridColumns() {
@@ -1470,19 +1472,23 @@
     return [
       {
         label: '時柱', gan: bz.getTimeGan(), zhi: bz.getTimeZhi(),
-        ganShiShen: toTraditional(bz.getTimeShiShenGan()), zhiShiShen: toTraditional((bz.getTimeShiShenZhi() || [])[0]),
+        ganShiShen: toTraditional(bz.getTimeShiShenGan()),
+        zhiShiShen: (bz.getTimeShiShenZhi() || []).map(toTraditional).join('、'),
       },
       {
         label: '日柱（日主）', gan: bz.getDayGan(), zhi: bz.getDayZhi(),
-        ganShiShen: '日主', zhiShiShen: toTraditional((bz.getDayShiShenZhi() || [])[0]),
+        ganShiShen: '日主',
+        zhiShiShen: (bz.getDayShiShenZhi() || []).map(toTraditional).join('、'),
       },
       {
         label: '月柱', gan: bz.getMonthGan(), zhi: bz.getMonthZhi(),
-        ganShiShen: toTraditional(bz.getMonthShiShenGan()), zhiShiShen: toTraditional((bz.getMonthShiShenZhi() || [])[0]),
+        ganShiShen: toTraditional(bz.getMonthShiShenGan()),
+        zhiShiShen: (bz.getMonthShiShenZhi() || []).map(toTraditional).join('、'),
       },
       {
         label: '年柱', gan: bz.getYearGan(), zhi: bz.getYearZhi(),
-        ganShiShen: toTraditional(bz.getYearShiShenGan()), zhiShiShen: toTraditional((bz.getYearShiShenZhi() || [])[0]),
+        ganShiShen: toTraditional(bz.getYearShiShenGan()),
+        zhiShiShen: (bz.getYearShiShenZhi() || []).map(toTraditional).join('、'),
       },
       {
         label: '大運', gan: dayunGan, zhi: dayunZhi,
