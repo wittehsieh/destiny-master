@@ -252,8 +252,7 @@
     margin-top: 4px;
     flex-wrap: wrap;
   }
-  .horoscope-toggle,
-  .bazi-toggle {
+  .horoscope-toggle {
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
@@ -263,8 +262,7 @@
     font-weight: normal;
     cursor: pointer;
   }
-  .horoscope-toggle.active,
-  .bazi-toggle.active {
+  .horoscope-toggle.active {
     font-weight: bold;
   }
   .horoscope-toggle[data-scope="decadal"].active {
@@ -352,9 +350,7 @@
     .body-tag { font-size: 0.56rem; }
 
     .center-info { font-size: 0.66rem; padding: 8px; gap: 4px; }
-    .horoscope-toggle, .bazi-toggle { font-size: 0.66rem; padding: 3px 8px; }
-    .bazi-pillar-detail { font-size: 0.64rem; }
-    .bazi-dayun-item { min-width: 64px; padding: 6px 8px; }
+    .horoscope-toggle { font-size: 0.66rem; padding: 3px 8px; }
     #horoscope-legend { font-size: 0.58rem; }
     .horoscope-tag { font-size: 0.54rem; }
 
@@ -424,124 +420,50 @@
     margin-top: 10px;
     min-height: 20px;
   }
-  .bazi-block + .bazi-block {
-    margin-top: 16px;
-  }
-  .bazi-block h3 {
-    font-size: 0.85rem;
-    color: var(--text);
-    margin: 0 0 8px;
-  }
-  .bazi-hint {
-    font-size: 0.8rem;
-    color: #8f93a0;
-  }
   .bazi-copy-btn {
     margin-top: 12px;
   }
-  .bazi-toggle[data-scope="pillars"].active,
-  .bazi-toggle[data-scope="shishen"].active,
-  .bazi-toggle[data-scope="dayun"].active {
-    border-color: var(--gold);
-    color: var(--gold);
-    background: rgba(201, 162, 75, 0.15);
-  }
-  .bazi-pillars-grid {
+  .bazi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
   }
-  .bazi-pillar {
+  .bazi-cell {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 10px;
+    padding: 8px 4px;
     text-align: center;
+    min-width: 0;
   }
-  .bazi-pillar-label {
+  .bazi-cell-title {
+    background: transparent;
+    border: none;
     color: var(--gold);
-    font-size: 0.78rem;
-    margin-bottom: 4px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    padding: 0 2px 6px;
+    word-break: break-word;
   }
-  .bazi-pillar-ganzhi {
+  .bazi-char {
     font-size: 1.3rem;
     font-weight: bold;
-    margin-bottom: 6px;
   }
-  .bazi-pillar-detail {
+  .bazi-shishen {
     font-size: 0.7rem;
-    color: #8f93a0;
-    line-height: 1.5;
-  }
-  .bazi-shishen-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-  .bazi-shishen-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px;
-    text-align: center;
-  }
-  .bazi-shishen-label {
-    color: var(--gold);
-    font-size: 0.78rem;
-    margin-bottom: 4px;
-  }
-  .bazi-shishen-main {
-    font-size: 1rem;
-    font-weight: bold;
-  }
-  .bazi-shishen-sub {
-    font-size: 0.68rem;
     color: #8f93a0;
     margin-top: 4px;
-  }
-  .bazi-dayun-intro {
-    font-size: 0.82rem;
-    color: #b7bccb;
-    margin-bottom: 10px;
-  }
-  .bazi-dayun-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .bazi-dayun-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
-    text-align: center;
-    min-width: 84px;
-    flex: 1 1 84px;
-  }
-  .bazi-dayun-item.current {
-    border-color: var(--gold);
-  }
-  .bazi-dayun-ganzhi {
-    font-size: 1.05rem;
-    font-weight: bold;
-  }
-  .bazi-dayun-age {
-    font-size: 0.7rem;
-    color: #8f93a0;
-    margin-top: 2px;
-  }
-  .bazi-dayun-year {
-    font-size: 0.65rem;
-    color: #6d7180;
+    word-break: break-word;
   }
 
   @media (max-width: 640px) {
-    .bazi-pillars-grid, .bazi-shishen-grid {
-      grid-template-columns: repeat(2, 1fr);
+    .bazi-grid {
+      gap: 3px;
     }
-    .bazi-dayun-item {
-      min-width: 72px;
-    }
+    .bazi-cell { padding: 5px 2px; }
+    .bazi-cell-title { font-size: 0.56rem; padding-bottom: 4px; }
+    .bazi-char { font-size: 0.95rem; }
+    .bazi-shishen { font-size: 0.54rem; }
   }
 
   /* ---- 使用者列表 / 開始畫面 ---- */
@@ -749,13 +671,8 @@
 
   <div class="panel bazi-panel hidden" id="bazi-section">
     <h2>八字</h2>
-    <div class="horoscope-toggle-row">
-      <button type="button" class="bazi-toggle" data-scope="pillars">四柱</button>
-      <button type="button" class="bazi-toggle" data-scope="shishen">十神</button>
-      <button type="button" class="bazi-toggle" data-scope="dayun">大運</button>
-    </div>
     <div id="bazi-content"></div>
-    <button type="button" class="copy-chart-btn bazi-copy-btn" id="copy-bazi-btn">📋 一鍵複製八字（四柱＋十神＋大運）</button>
+    <button type="button" class="copy-chart-btn bazi-copy-btn" id="copy-bazi-btn">📋 一鍵複製八字</button>
   </div>
 
   </div><!-- /#main-screen -->
@@ -811,7 +728,6 @@
   const baziSection = document.getElementById('bazi-section');
   const baziContent = document.getElementById('bazi-content');
   const copyBaziBtn = document.getElementById('copy-bazi-btn');
-  const baziToggleBtns = Array.from(document.querySelectorAll('.bazi-toggle'));
 
   dateTypeSelect.addEventListener('change', () => {
     leapField.classList.toggle('hidden', dateTypeSelect.value !== 'lunar');
@@ -1230,8 +1146,6 @@
       renderChart(astrolabe);
 
       computeBazi();
-      baziState = { pillars: false, shishen: false, dayun: false };
-      baziToggleBtns.forEach((btn) => btn.classList.remove('active'));
       updateBaziContent();
       baziSection.classList.remove('hidden');
     } catch (err) {
@@ -1508,7 +1422,6 @@
 
   let currentBazi = null;
   let currentYun = null;
-  let baziState = { pillars: false, shishen: false, dayun: false };
 
   function computeBazi() {
     const birthDate = resolveGregorianBirthDate();
@@ -1521,149 +1434,108 @@
     currentYun = currentBazi.getYun(genderCode);
   }
 
-  function getBaziPillars(bz) {
-    return [
-      { label: '年柱', ganzhi: bz.getYear(), hideGan: bz.getYearHideGan(), naYin: bz.getYearNaYin() },
-      { label: '月柱', ganzhi: bz.getMonth(), hideGan: bz.getMonthHideGan(), naYin: bz.getMonthNaYin() },
-      { label: '日柱', ganzhi: bz.getDay(), hideGan: bz.getDayHideGan(), naYin: bz.getDayNaYin() },
-      { label: '時柱', ganzhi: bz.getTime(), hideGan: bz.getTimeHideGan(), naYin: bz.getTimeNaYin() },
-    ];
+  // 十神是「日主天干」與「目標天干」的固定對應表，直接沿用 lunar-typescript
+  // 內部已經算好、已驗證過的 LunarUtil.SHI_SHEN／ZHI_HIDE_GAN 對照表，
+  // 不是自行簡化推算——只是把同一套查表邏輯套用到大運／流年的干支上
+  // （EightChar 本身沒有提供大運、流年的十神方法）。
+  function shishenForGan(dayGan, targetGan) {
+    if (!targetGan) return '';
+    const raw = LunarTS.LunarUtil.SHI_SHEN[dayGan + targetGan];
+    return raw ? toTraditional(raw) : '';
+  }
+  function shishenForZhi(dayGan, zhi) {
+    if (!zhi) return '';
+    const hideGan = LunarTS.LunarUtil.ZHI_HIDE_GAN[zhi];
+    return shishenForGan(dayGan, hideGan && hideGan[0]);
   }
 
-  function getBaziShishen(bz) {
-    return [
-      { label: '年干', main: bz.getYearShiShenGan(), sub: bz.getYearShiShenZhi() },
-      { label: '月干', main: bz.getMonthShiShenGan(), sub: bz.getMonthShiShenZhi() },
-      { label: '日干', main: bz.getDayShiShenGan(), sub: bz.getDayShiShenZhi() },
-      { label: '時干', main: bz.getTimeShiShenGan(), sub: bz.getTimeShiShenZhi() },
-    ];
-  }
-
-  function getBaziDayunInfo(yun) {
-    const startYear = yun.getStartYear();
-    const startMonth = yun.getStartMonth();
-    const startDay = yun.getStartDay();
-    const forward = yun.isForward();
-    const intro = `${startYear}年${startMonth}個月${startDay}天起運，${forward ? '順排' : '逆排'}`;
-    const list = yun.getDaYun(10).map((d) => ({
-      ganzhi: d.getGanZhi(),
-      startAge: d.getStartAge(),
-      endAge: d.getEndAge(),
-      startYear: d.getStartYear(),
-      endYear: d.getEndYear(),
-    }));
-    return { intro, list };
-  }
-
-  function renderBaziPillars() {
-    const pillars = getBaziPillars(currentBazi);
-    return `
-      <div class="bazi-pillars-grid">
-        ${pillars.map((p) => `
-          <div class="bazi-pillar">
-            <div class="bazi-pillar-label">${escapeHtml(p.label)}</div>
-            <div class="bazi-pillar-ganzhi">${escapeHtml(p.ganzhi || '')}</div>
-            <div class="bazi-pillar-detail">
-              藏干：${escapeHtml((p.hideGan || []).join('、') || '—')}<br>
-              納音：${escapeHtml(toTraditional(p.naYin))}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  function renderBaziShishen() {
-    const items = getBaziShishen(currentBazi);
-    return `
-      <div class="bazi-shishen-grid">
-        ${items.map((it) => `
-          <div class="bazi-shishen-item">
-            <div class="bazi-shishen-label">${escapeHtml(it.label)}</div>
-            <div class="bazi-shishen-main">${escapeHtml(toTraditional(it.main))}</div>
-            <div class="bazi-shishen-sub">藏干十神：${escapeHtml((it.sub || []).map(toTraditional).join('、') || '—')}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  function renderBaziDayun() {
-    const { intro, list } = getBaziDayunInfo(currentYun);
+  function getBaziGridColumns() {
+    const bz = currentBazi;
+    const dayGan = bz.getDayGan();
     const thisYear = new Date().getFullYear();
-    return `
-      <div class="bazi-dayun-intro">${escapeHtml(intro)}</div>
-      <div class="bazi-dayun-list">
-        ${list.map((d) => {
-          const isCurrent = thisYear >= d.startYear && thisYear <= d.endYear;
-          return `
-            <div class="bazi-dayun-item${isCurrent ? ' current' : ''}">
-              <div class="bazi-dayun-ganzhi">${escapeHtml(d.ganzhi || '起運前')}</div>
-              <div class="bazi-dayun-age">${d.startAge}–${d.endAge}歲</div>
-              <div class="bazi-dayun-year">${d.startYear}–${d.endYear}</div>
-            </div>
-          `;
-        }).join('')}
+    const dayunList = currentYun.getDaYun(10);
+    const currentDaYun = dayunList.find((d) => thisYear >= d.getStartYear() && thisYear <= d.getEndYear());
+
+    let dayunGan = '', dayunZhi = '', liuNianGan = '', liuNianZhi = '';
+    if (currentDaYun) {
+      const dgz = currentDaYun.getGanZhi();
+      if (dgz) { dayunGan = dgz[0]; dayunZhi = dgz[1]; }
+      const liuNian = currentDaYun.getLiuNian().find((l) => l.getYear() === thisYear);
+      if (liuNian) {
+        const lgz = liuNian.getGanZhi();
+        liuNianGan = lgz[0]; liuNianZhi = lgz[1];
+      }
+    }
+
+    return [
+      {
+        label: '時柱', gan: bz.getTimeGan(), zhi: bz.getTimeZhi(),
+        ganShiShen: toTraditional(bz.getTimeShiShenGan()), zhiShiShen: toTraditional((bz.getTimeShiShenZhi() || [])[0]),
+      },
+      {
+        label: '日柱（日主）', gan: bz.getDayGan(), zhi: bz.getDayZhi(),
+        ganShiShen: '日主', zhiShiShen: toTraditional((bz.getDayShiShenZhi() || [])[0]),
+      },
+      {
+        label: '月柱', gan: bz.getMonthGan(), zhi: bz.getMonthZhi(),
+        ganShiShen: toTraditional(bz.getMonthShiShenGan()), zhiShiShen: toTraditional((bz.getMonthShiShenZhi() || [])[0]),
+      },
+      {
+        label: '年柱', gan: bz.getYearGan(), zhi: bz.getYearZhi(),
+        ganShiShen: toTraditional(bz.getYearShiShenGan()), zhiShiShen: toTraditional((bz.getYearShiShenZhi() || [])[0]),
+      },
+      {
+        label: '大運', gan: dayunGan, zhi: dayunZhi,
+        ganShiShen: shishenForGan(dayGan, dayunGan), zhiShiShen: shishenForZhi(dayGan, dayunZhi),
+      },
+      {
+        label: '流年', gan: liuNianGan, zhi: liuNianZhi,
+        ganShiShen: shishenForGan(dayGan, liuNianGan), zhiShiShen: shishenForZhi(dayGan, liuNianZhi),
+      },
+    ];
+  }
+
+  function renderBaziGrid() {
+    const columns = getBaziGridColumns();
+    const titleRow = columns.map((c) => `<div class="bazi-cell bazi-cell-title">${escapeHtml(c.label)}</div>`).join('');
+    const ganRow = columns.map((c) => `
+      <div class="bazi-cell">
+        <div class="bazi-char">${escapeHtml(c.gan || '—')}</div>
+        <div class="bazi-shishen">${escapeHtml(c.ganShiShen || '')}</div>
       </div>
-    `;
+    `).join('');
+    const zhiRow = columns.map((c) => `
+      <div class="bazi-cell">
+        <div class="bazi-char">${escapeHtml(c.zhi || '—')}</div>
+        <div class="bazi-shishen">${escapeHtml(c.zhiShiShen || '')}</div>
+      </div>
+    `).join('');
+    return `<div class="bazi-grid">${titleRow}${ganRow}${zhiRow}</div>`;
   }
 
   function updateBaziContent() {
-    if (!currentBazi) {
-      baziContent.innerHTML = '';
-      return;
-    }
-    const parts = [];
-    if (baziState.pillars) parts.push(`<div class="bazi-block"><h3>四柱</h3>${renderBaziPillars()}</div>`);
-    if (baziState.shishen) parts.push(`<div class="bazi-block"><h3>十神</h3>${renderBaziShishen()}</div>`);
-    if (baziState.dayun) parts.push(`<div class="bazi-block"><h3>大運</h3>${renderBaziDayun()}</div>`);
-    baziContent.innerHTML = parts.join('') || '<div class="bazi-hint">請點選上方按鈕以顯示四柱、十神或大運。</div>';
+    baziContent.innerHTML = currentBazi ? renderBaziGrid() : '';
   }
 
-  baziToggleBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const scope = btn.dataset.scope;
-      baziState[scope] = !baziState[scope];
-      btn.classList.toggle('active', baziState[scope]);
-      updateBaziContent();
+  function formatBaziText() {
+    const lines = ['【八字】'];
+    getBaziGridColumns().forEach((c) => {
+      lines.push(`${c.label}　天干：${c.gan || '—'}（${c.ganShiShen || '—'}）　地支：${c.zhi || '—'}（${c.zhiShiShen || '—'}）`);
     });
-  });
-
-  function formatBaziText(bz, yun) {
-    const lines = [];
-    lines.push('【四柱】');
-    getBaziPillars(bz).forEach((p) => {
-      lines.push(`${p.label}　${p.ganzhi}　藏干：${(p.hideGan || []).join('、') || '—'}　納音：${toTraditional(p.naYin)}`);
-    });
-
-    lines.push('');
-    lines.push('【十神】');
-    getBaziShishen(bz).forEach((it) => {
-      lines.push(`${it.label}　${toTraditional(it.main)}　藏干十神：${(it.sub || []).map(toTraditional).join('、') || '—'}`);
-    });
-
-    lines.push('');
-    lines.push('【大運】');
-    const { intro, list } = getBaziDayunInfo(yun);
-    lines.push(intro);
-    list.forEach((d) => {
-      lines.push(`${d.startYear}-${d.endYear}（${d.startAge}-${d.endAge}歲）　${d.ganzhi || '起運前'}`);
-    });
-
     return lines.join('\n').trim();
   }
 
   copyBaziBtn.addEventListener('click', async () => {
     if (!currentBazi || !currentYun) return;
     try {
-      await copyTextToClipboard(formatBaziText(currentBazi, currentYun));
+      await copyTextToClipboard(formatBaziText());
       copyBaziBtn.textContent = '已複製 ✓';
       copyBaziBtn.classList.add('copied');
     } catch (err) {
       copyBaziBtn.textContent = '複製失敗';
     }
     setTimeout(() => {
-      copyBaziBtn.textContent = '📋 一鍵複製八字（四柱＋十神＋大運）';
+      copyBaziBtn.textContent = '📋 一鍵複製八字';
       copyBaziBtn.classList.remove('copied');
     }, 1500);
   });
@@ -1672,8 +1544,6 @@
     baziSection.classList.add('hidden');
     currentBazi = null;
     currentYun = null;
-    baziState = { pillars: false, shishen: false, dayun: false };
-    baziToggleBtns.forEach((btn) => btn.classList.remove('active'));
     baziContent.innerHTML = '';
   }
 
