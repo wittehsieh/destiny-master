@@ -367,29 +367,167 @@
     .chart-grid { gap: 2px; }
   }
 
-  .copy-chart-btn {
+  .copy-chart-btn, .save-chart-btn {
     background: transparent;
     color: var(--gold);
     border: 1px solid var(--gold);
     border-radius: 4px;
-    padding: 4px 10px;
-    font-size: 0.72rem;
+    padding: 6px 14px;
+    font-size: 0.85rem;
     font-weight: normal;
     cursor: pointer;
     white-space: nowrap;
   }
-  .copy-chart-btn:hover { opacity: 0.85; }
-  .copy-chart-btn.copied {
+  .copy-chart-btn:hover, .save-chart-btn:hover { opacity: 0.85; }
+  .copy-chart-btn.copied, .save-chart-btn.copied {
     background: var(--gold);
     color: #1a1a1a;
+  }
+  .chart-actions {
+    max-width: 1160px;
+    margin: 0 auto 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #save-status {
+    font-size: 0.8rem;
+    color: #e07070;
+    align-self: center;
+  }
+
+  /* ---- 使用者列表 / 開始畫面 ---- */
+  .user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .user-list-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .user-list-item {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .user-list-item:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .user-list-name {
+    display: block;
+    font-weight: bold;
+  }
+  .user-list-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: #8f93a0;
+    margin-top: 2px;
+  }
+  .user-delete-btn {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: #e07070;
+    border-radius: 6px;
+    padding: 0 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .user-delete-btn:hover {
+    border-color: #e07070;
+    background: rgba(224, 112, 112, 0.1);
+  }
+  .new-user-btn {
+    width: 100%;
+  }
+  .empty-user-hint {
+    color: #8f93a0;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+  .back-to-list-btn {
+    background: transparent;
+    border: none;
+    color: var(--gold);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 0 12px;
+    text-decoration: underline;
+  }
+  .back-to-list-btn:hover { opacity: 0.85; }
+
+  /* ---- Modal ---- */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .modal-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal-box p {
+    margin: 0 0 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .modal-actions button {
+    flex: 1;
+    max-width: 140px;
+  }
+  .modal-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
   }
 </style>
 </head>
 <body>
   <h1>紫微斗數排盤</h1>
 
+  <div class="panel" id="start-screen">
+    <div class="user-list" id="user-list"></div>
+    <div class="empty-user-hint hidden" id="empty-user-hint">本機還沒有儲存過的使用者，按下方新增一位。</div>
+    <button type="button" class="new-user-btn" id="new-user-btn">+ 新增使用者</button>
+  </div>
+
+  <div id="main-screen" class="hidden">
+  <button type="button" class="back-to-list-btn" id="back-to-list-btn">← 返回使用者列表</button>
+
   <div class="panel">
     <form id="chart-form">
+      <div class="field full-width">
+        <label for="userName">姓名</label>
+        <input type="text" id="userName" placeholder="用來儲存與辨識這筆資料" autocomplete="off" />
+      </div>
       <div class="field">
         <label for="dateType">曆別</label>
         <select id="dateType">
@@ -453,6 +591,33 @@
     </div>
   </div>
 
+  <div class="chart-actions hidden" id="chart-actions">
+    <button type="button" class="copy-chart-btn" id="copy-chart-btn">📋 一鍵複製（命盤＋大限流年流月流日）</button>
+    <button type="button" class="save-chart-btn" id="save-chart-btn">💾 儲存</button>
+    <span id="save-status"></span>
+  </div>
+
+  </div><!-- /#main-screen -->
+
+  <div class="modal-backdrop hidden" id="overwrite-modal">
+    <div class="modal-box">
+      <p id="overwrite-modal-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn-secondary" id="overwrite-cancel-btn">取消</button>
+        <button type="button" id="overwrite-confirm-btn">確定覆蓋</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="success-modal">
+    <div class="modal-box">
+      <p>已儲存！</p>
+      <div class="modal-actions">
+        <button type="button" id="success-ok-btn">好</button>
+      </div>
+    </div>
+  </div>
+
 <script src="iztro.min.js"></script>
 <script src="astronomy.browser.min.js"></script>
 <script src="location-data.js"></script>
@@ -464,6 +629,23 @@
   const errorMsg = document.getElementById('error-msg');
   const chartGrid = document.getElementById('chart-grid');
   const palaceInfoPanel = document.getElementById('palace-info-panel');
+  const nameInput = document.getElementById('userName');
+  const startScreen = document.getElementById('start-screen');
+  const mainScreen = document.getElementById('main-screen');
+  const userListEl = document.getElementById('user-list');
+  const emptyUserHint = document.getElementById('empty-user-hint');
+  const newUserBtn = document.getElementById('new-user-btn');
+  const backToListBtn = document.getElementById('back-to-list-btn');
+  const chartActions = document.getElementById('chart-actions');
+  const copyChartBtn = document.getElementById('copy-chart-btn');
+  const saveChartBtn = document.getElementById('save-chart-btn');
+  const saveStatus = document.getElementById('save-status');
+  const overwriteModal = document.getElementById('overwrite-modal');
+  const overwriteModalText = document.getElementById('overwrite-modal-text');
+  const overwriteConfirmBtn = document.getElementById('overwrite-confirm-btn');
+  const overwriteCancelBtn = document.getElementById('overwrite-cancel-btn');
+  const successModal = document.getElementById('success-modal');
+  const successOkBtn = document.getElementById('success-ok-btn');
 
   dateTypeSelect.addEventListener('change', () => {
     leapField.classList.toggle('hidden', dateTypeSelect.value !== 'lunar');
@@ -851,8 +1033,7 @@
 
   // ---- 表單送出：直接在瀏覽器端排盤，不再打 API ----
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
+  function runChart() {
     errorMsg.classList.add('hidden');
 
     if (!lastSolarTimeResult) {
@@ -886,13 +1067,20 @@
       errorMsg.classList.remove('hidden');
       chartGrid.classList.add('hidden');
       palaceInfoPanel.classList.add('hidden');
+      chartActions.classList.add('hidden');
     }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runChart();
   });
 
   function renderChart(astrolabe) {
     chartGrid.innerHTML = '';
     chartGrid.classList.remove('hidden');
     palaceInfoPanel.classList.remove('hidden');
+    chartActions.classList.remove('hidden');
 
     const centerInfo = document.createElement('div');
     centerInfo.className = 'center-info';
@@ -909,7 +1097,6 @@
         <button type="button" class="horoscope-toggle" data-scope="daily">流日</button>
       </div>
       <div id="horoscope-legend"></div>
-      <button type="button" class="copy-chart-btn" id="copy-chart-btn">📋 一鍵複製（命盤＋大限流年流月流日）</button>
     `;
     chartGrid.appendChild(centerInfo);
 
@@ -921,29 +1108,6 @@
         btn.classList.toggle('active', horoscopeState[scope]);
         updateHoroscopeOverlay();
       });
-    });
-
-    const copyChartBtn = centerInfo.querySelector('#copy-chart-btn');
-    copyChartBtn.addEventListener('click', async () => {
-      try {
-        const astrolabeRaw = computeAstrolabe(currentPayload);
-        const horoscopeRaw = astrolabeRaw.horoscope();
-        const horoscope = {
-          decadal: simplifyHoroscopeItem(horoscopeRaw.decadal),
-          yearly: simplifyHoroscopeItem(horoscopeRaw.yearly),
-          monthly: simplifyHoroscopeItem(horoscopeRaw.monthly),
-          daily: simplifyHoroscopeItem(horoscopeRaw.daily),
-        };
-        await copyTextToClipboard(formatChartText(astrolabe, horoscope));
-        copyChartBtn.textContent = '已複製 ✓';
-        copyChartBtn.classList.add('copied');
-      } catch (err) {
-        copyChartBtn.textContent = '複製失敗';
-      }
-      setTimeout(() => {
-        copyChartBtn.textContent = '📋 一鍵複製（命盤＋大限流年流月流日）';
-        copyChartBtn.classList.remove('copied');
-      }, 1500);
     });
 
     (astrolabe.palaces || []).forEach((palace) => {
@@ -1131,6 +1295,242 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  // ---- 一鍵複製按鈕（現在是靜態按鈕，命盤算完才顯示） ----
+
+  copyChartBtn.addEventListener('click', async () => {
+    if (!currentAstrolabe || !currentPayload) return;
+    try {
+      const astrolabeRaw = computeAstrolabe(currentPayload);
+      const horoscopeRaw = astrolabeRaw.horoscope();
+      const horoscope = {
+        decadal: simplifyHoroscopeItem(horoscopeRaw.decadal),
+        yearly: simplifyHoroscopeItem(horoscopeRaw.yearly),
+        monthly: simplifyHoroscopeItem(horoscopeRaw.monthly),
+        daily: simplifyHoroscopeItem(horoscopeRaw.daily),
+      };
+      await copyTextToClipboard(formatChartText(currentAstrolabe, horoscope));
+      copyChartBtn.textContent = '已複製 ✓';
+      copyChartBtn.classList.add('copied');
+    } catch (err) {
+      copyChartBtn.textContent = '複製失敗';
+    }
+    setTimeout(() => {
+      copyChartBtn.textContent = '📋 一鍵複製（命盤＋大限流年流月流日）';
+      copyChartBtn.classList.remove('copied');
+    }, 1500);
+  });
+
+  // ---- 本機使用者列表（存在瀏覽器 localStorage，不會上傳到伺服器） ----
+
+  const STORAGE_KEY = 'ziweiSavedUsers';
+
+  function loadSavedUsers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveSavedUsers(users) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+  }
+
+  function generateId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function showScreen(name) {
+    startScreen.classList.toggle('hidden', name !== 'start');
+    mainScreen.classList.toggle('hidden', name !== 'main');
+  }
+
+  function formatBirthInfoMeta(b) {
+    const dateLabel = b.dateType === 'lunar' ? '農曆' : '國曆';
+    const timeLabel = `${String(b.birthHour).padStart(2, '0')}:${String(b.birthMinute).padStart(2, '0')}`;
+    return `${dateLabel} ${b.year}/${b.month}/${b.day} ${timeLabel} · ${b.gender}`;
+  }
+
+  function renderStartScreen() {
+    const users = loadSavedUsers();
+    userListEl.innerHTML = users
+      .map((u) => `
+        <div class="user-list-row">
+          <button type="button" class="user-list-item" data-id="${escapeHtml(u.id)}">
+            <span class="user-list-name">${escapeHtml(u.name)}</span>
+            <span class="user-list-meta">${escapeHtml(formatBirthInfoMeta(u.birthInfo))}</span>
+          </button>
+          <button type="button" class="user-delete-btn" data-id="${escapeHtml(u.id)}">刪除</button>
+        </div>
+      `)
+      .join('');
+    emptyUserHint.classList.toggle('hidden', users.length > 0);
+
+    userListEl.querySelectorAll('.user-list-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const user = users.find((u) => u.id === btn.dataset.id);
+        if (!user) return;
+        openUserChart(user);
+      });
+    });
+
+    userListEl.querySelectorAll('.user-delete-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const user = users.find((u) => u.id === btn.dataset.id);
+        if (!user) return;
+        showConfirmModal(`確定要刪除「${user.name}」的資料嗎？此動作無法復原。`, () => {
+          const remaining = loadSavedUsers().filter((u) => u.id !== user.id);
+          saveSavedUsers(remaining);
+          renderStartScreen();
+        });
+      });
+    });
+  }
+
+  function openUserChart(user) {
+    showScreen('main');
+    loadProfileIntoForm(user);
+    runChart();
+  }
+
+  function loadProfileIntoForm(user) {
+    const b = user.birthInfo;
+    nameInput.value = user.name;
+    dateTypeSelect.value = b.dateType;
+    leapField.classList.toggle('hidden', b.dateType !== 'lunar');
+    yearSelect.value = b.year;
+    monthSelect.value = b.month;
+    updateDayOptions();
+    daySelect.value = b.day;
+    document.getElementById('isLeapMonth').checked = !!b.isLeapMonth;
+    birthHourSelect.value = b.birthHour;
+    birthMinuteSelect.value = b.birthMinute;
+    document.getElementById('gender').value = b.gender;
+
+    if (b.location) {
+      continentSelect.value = b.location.continent;
+      populateCountries(b.location.country);
+      citySearchInput.value = '';
+      populateCities(b.location.city);
+    }
+    recomputeSolarTime();
+  }
+
+  function getCurrentBirthInfo() {
+    return {
+      dateType: dateTypeSelect.value,
+      year: Number(yearSelect.value),
+      month: Number(monthSelect.value),
+      day: Number(daySelect.value),
+      isLeapMonth: document.getElementById('isLeapMonth').checked,
+      birthHour: Number(birthHourSelect.value),
+      birthMinute: Number(birthMinuteSelect.value),
+      gender: document.getElementById('gender').value,
+      location: getSelectedLocation(),
+    };
+  }
+
+  function openModal(el) { el.classList.remove('hidden'); }
+  function closeModal(el) { el.classList.add('hidden'); }
+
+  let pendingConfirmAction = null;
+
+  function showConfirmModal(message, onConfirm) {
+    overwriteModalText.textContent = message;
+    pendingConfirmAction = onConfirm;
+    openModal(overwriteModal);
+  }
+
+  overwriteConfirmBtn.addEventListener('click', () => {
+    closeModal(overwriteModal);
+    if (pendingConfirmAction) pendingConfirmAction();
+    pendingConfirmAction = null;
+  });
+  overwriteCancelBtn.addEventListener('click', () => {
+    closeModal(overwriteModal);
+    pendingConfirmAction = null;
+  });
+  successOkBtn.addEventListener('click', () => closeModal(successModal));
+
+  saveChartBtn.addEventListener('click', () => {
+    saveStatus.textContent = '';
+    const name = nameInput.value.trim();
+    if (!name) {
+      saveStatus.textContent = '請先輸入姓名再儲存';
+      return;
+    }
+    const birthInfo = getCurrentBirthInfo();
+    if (!birthInfo.location) {
+      saveStatus.textContent = '請先選擇出生地';
+      return;
+    }
+
+    const users = loadSavedUsers();
+    const existing = users.find((u) => u.name === name);
+
+    const doSave = () => {
+      const list = loadSavedUsers();
+      const idx = list.findIndex((u) => u.name === name);
+      if (idx >= 0) {
+        list[idx].birthInfo = birthInfo;
+      } else {
+        list.push({ id: generateId(), name, birthInfo });
+      }
+      saveSavedUsers(list);
+      openModal(successModal);
+    };
+
+    if (existing) {
+      showConfirmModal(`已經有「${name}」的資料，要覆蓋嗎？`, doSave);
+    } else {
+      doSave();
+    }
+  });
+
+  function resetFormToDefaults() {
+    nameInput.value = '';
+    dateTypeSelect.value = 'solar';
+    leapField.classList.add('hidden');
+    document.getElementById('isLeapMonth').checked = false;
+    yearSelect.value = CURRENT_YEAR - 30;
+    monthSelect.value = 1;
+    updateDayOptions();
+    daySelect.value = 1;
+    birthHourSelect.value = 12;
+    birthMinuteSelect.value = 0;
+    document.getElementById('gender').value = '女';
+    continentSelect.value = 'Asia';
+    populateCountries('Taiwan');
+    citySearchInput.value = '';
+    populateCities('Taipei');
+    recomputeSolarTime();
+
+    errorMsg.classList.add('hidden');
+    saveStatus.textContent = '';
+    chartGrid.classList.add('hidden');
+    palaceInfoPanel.classList.add('hidden');
+    chartActions.classList.add('hidden');
+    currentPayload = null;
+    currentAstrolabe = null;
+  }
+
+  newUserBtn.addEventListener('click', () => {
+    resetFormToDefaults();
+    showScreen('main');
+  });
+
+  backToListBtn.addEventListener('click', () => {
+    renderStartScreen();
+    showScreen('start');
+  });
+
+  // ---- 開場畫面：有存過使用者就顯示列表，否則直接進入表單 ----
+  renderStartScreen();
+  showScreen(loadSavedUsers().length > 0 ? 'start' : 'main');
 </script>
 </body>
 </html>
