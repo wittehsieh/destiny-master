@@ -506,6 +506,22 @@
     color: #8f93a0;
     margin-top: 2px;
   }
+  .user-ai-btn {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 6px;
+    padding: 0 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+  .user-ai-btn:hover {
+    background: rgba(201, 162, 75, 0.12);
+  }
   .user-delete-btn {
     flex: 0 0 auto;
     background: transparent;
@@ -1596,6 +1612,7 @@
             <span class="user-list-name">${escapeHtml(u.name)}</span>
             <span class="user-list-meta">${escapeHtml(formatBirthInfoMeta(u.birthInfo))}</span>
           </button>
+          <a class="user-ai-btn" href="ai-interpret.html?userId=${encodeURIComponent(u.id)}">✨ AI解盤</a>
           <button type="button" class="user-delete-btn" data-id="${escapeHtml(u.id)}">刪除</button>
         </div>
       `)

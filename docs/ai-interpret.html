@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 解盤</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --gold: #c9a24b;
+    --text: #e8e6e1;
+    --muted: #8f93a0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  header a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+  header a:hover { color: var(--gold); }
+  header h1 {
+    font-size: 1rem;
+    color: var(--gold);
+    margin: 0;
+  }
+  header .who {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  #output-area {
+    flex: 1 1 80%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .empty-state {
+    margin: auto;
+    text-align: center;
+    max-width: 480px;
+  }
+  .empty-state p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+  }
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .example-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .example-chip:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .msg {
+    max-width: 80%;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: rgba(91, 155, 213, 0.14);
+    border: 1px solid #5b9bd5;
+    white-space: pre-wrap;
+  }
+  .msg.assistant {
+    align-self: flex-start;
+    max-width: 90%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+  .msg.error {
+    align-self: flex-start;
+    background: rgba(224, 112, 112, 0.12);
+    border: 1px solid #e07070;
+    color: #e07070;
+  }
+  .msg.loading {
+    align-self: flex-start;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .msg.assistant h3, .msg.assistant h4 {
+    color: var(--gold);
+    margin: 14px 0 6px;
+    font-size: 1rem;
+  }
+  .msg.assistant h3:first-child, .msg.assistant h4:first-child { margin-top: 0; }
+  .msg.assistant p { margin: 8px 0; }
+  .msg.assistant strong { color: var(--gold); }
+  .msg.assistant hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .msg.assistant table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0;
+    font-size: 0.85rem;
+  }
+  .msg.assistant th, .msg.assistant td {
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    text-align: left;
+  }
+  .msg.assistant th { color: var(--gold); }
+  .msg.assistant ul { margin: 8px 0; padding-left: 20px; }
+
+  #input-area {
+    flex: 0 0 auto;
+    min-height: 20vh;
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  #question-input {
+    flex: 1;
+    resize: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  #send-btn {
+    flex: 0 0 auto;
+    align-self: flex-end;
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 8px;
+    padding: 0 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  #send-btn:hover { background: rgba(201, 162, 75, 0.12); }
+  #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media (max-width: 640px) {
+    .msg { max-width: 92%; }
+    .msg.assistant { max-width: 96%; }
+    #input-area { flex-direction: column; }
+    #send-btn { align-self: stretch; padding: 8px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <a href="index.html">← 返回命盤</a>
+    <h1>✨ AI 解盤</h1>
+    <span class="who" id="who-label"></span>
+  </header>
+
+  <div id="output-area"></div>
+
+  <div id="input-area">
+    <textarea id="question-input" placeholder="輸入問題，例如：幫我論命"></textarea>
+    <button type="button" id="send-btn">送出</button>
+  </div>
+
+<script>
+  const API_BASE = 'https://ziwei-api-henna.vercel.app';
+  const STORAGE_KEY = 'ziweiSavedUsers';
+  const EXAMPLE_QUESTIONS = [
+    '幫我論命',
+    '看看我今年的工作運',
+    '我的財運如何',
+    '我適合什麼樣的伴侶',
+    '我的健康需要注意什麼',
+    '這十年整體運勢如何',
+  ];
+
+  const outputArea = document.getElementById('output-area');
+  const questionInput = document.getElementById('question-input');
+  const sendBtn = document.getElementById('send-btn');
+  const whoLabel = document.getElementById('who-label');
+
+  function loadSavedUsers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function buildChartInput(birthInfo) {
+    const input = {
+      dateType: birthInfo.dateType,
+      date: `${birthInfo.year}-${birthInfo.month}-${birthInfo.day}`,
+      isLeapMonth: !!birthInfo.isLeapMonth,
+      gender: birthInfo.gender,
+      birthTime: `${String(birthInfo.birthHour).padStart(2, '0')}:${String(birthInfo.birthMinute).padStart(2, '0')}`,
+    };
+    const loc = birthInfo.location;
+    if (loc && loc.latitude !== undefined && loc.longitude !== undefined && loc.timezoneId) {
+      input.location = { latitude: loc.latitude, longitude: loc.longitude, timezoneId: loc.timezoneId };
+    }
+    return input;
+  }
+
+  function showFatalError(message) {
+    outputArea.innerHTML = `
+      <div class="empty-state">
+        <p>${escapeHtml(message)}</p>
+        <a class="example-chip" href="index.html">回到命盤頁面</a>
+      </div>
+    `;
+    questionInput.disabled = true;
+    sendBtn.disabled = true;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // 把系統 prompt 會產生的輕量 markdown（###/####標題、**粗體**、---分隔線、
+  // | table |、- 條列）轉成簡單的 HTML，不引入外部 markdown 套件。
+  function renderAssistantMarkdown(text) {
+    const escaped = escapeHtml(text);
+    const lines = escaped.split('\n');
+    const htmlParts = [];
+    let i = 0;
+    let inList = false;
+
+    function closeList() {
+      if (inList) { htmlParts.push('</ul>'); inList = false; }
+    }
+
+    function inline(s) {
+      return s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      if (/^#{3,4}\s+/.test(line)) {
+        closeList();
+        htmlParts.push(`<h3>${inline(line.replace(/^#{3,4}\s+/, ''))}</h3>`);
+        i++;
+        continue;
+      }
+      if (/^-{3,}$/.test(line.trim())) {
+        closeList();
+        htmlParts.push('<hr>');
+        i++;
+        continue;
+      }
+      if (/^\|.*\|$/.test(line.trim())) {
+        closeList();
+        const tableLines = [];
+        while (i < lines.length && /^\|.*\|$/.test(lines[i].trim())) {
+          tableLines.push(lines[i].trim());
+          i++;
+        }
+        const rows = tableLines
+          .filter((l) => !/^\|[\s-:|]+\|$/.test(l)) // drop the |---|---| separator row
+          .map((l) => l.slice(1, -1).split('|').map((c) => c.trim()));
+        if (rows.length) {
+          const [headerRow, ...bodyRows] = rows;
+          htmlParts.push('<table><thead><tr>' +
+            headerRow.map((c) => `<th>${inline(c)}</th>`).join('') +
+            '</tr></thead><tbody>' +
+            bodyRows.map((r) => '<tr>' + r.map((c) => `<td>${inline(c)}</td>`).join('') + '</tr>').join('') +
+            '</tbody></table>');
+        }
+        continue;
+      }
+      if (/^[-*]\s+/.test(line)) {
+        if (!inList) { htmlParts.push('<ul>'); inList = true; }
+        htmlParts.push(`<li>${inline(line.replace(/^[-*]\s+/, ''))}</li>`);
+        i++;
+        continue;
+      }
+      closeList();
+      if (line.trim() === '') { i++; continue; }
+      htmlParts.push(`<p>${inline(line)}</p>`);
+      i++;
+    }
+    closeList();
+    return htmlParts.join('\n');
+  }
+
+  function addUserMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'msg user';
+    div.textContent = text;
+    outputArea.appendChild(div);
+    outputArea.scrollTop = outputArea.scrollHeight;
+  }
+
+  function addAssistantMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.innerHTML = renderAssistantMarkdown(text);
+    outputArea.appendChild(div);
+    outputArea.scrollTop = outputArea.scrollHeight;
+    return div;
+  }
+
+  function addErrorMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'msg error';
+    div.textContent = text;
+    outputArea.appendChild(div);
+    outputArea.scrollTop = outputArea.scrollHeight;
+  }
+
+  function showEmptyState() {
+    outputArea.innerHTML = `
+      <div class="empty-state">
+        <p>想問什麼都可以，或直接點下面的範例開始：</p>
+        <div class="example-chips">
+          ${EXAMPLE_QUESTIONS.map((q) => `<button type="button" class="example-chip" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`).join('')}
+        </div>
+      </div>
+    `;
+    outputArea.querySelectorAll('.example-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        questionInput.value = btn.dataset.q;
+        send();
+      });
+    });
+  }
+
+  let chartInput = null;
+  let history = [];
+
+  async function send() {
+    const question = questionInput.value.trim();
+    if (!question || !chartInput) return;
+
+    if (outputArea.querySelector('.empty-state')) {
+      outputArea.innerHTML = '';
+    }
+
+    addUserMessage(question);
+    questionInput.value = '';
+    sendBtn.disabled = true;
+
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'msg loading';
+    loadingEl.textContent = '解盤中...';
+    outputArea.appendChild(loadingEl);
+    outputArea.scrollTop = outputArea.scrollHeight;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/interpret`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chartInput, question, history }),
+      });
+      const data = await res.json();
+      loadingEl.remove();
+
+      if (!res.ok) {
+        addErrorMessage(data.error || `發生錯誤（HTTP ${res.status}）`);
+        return;
+      }
+
+      addAssistantMessage(data.answer);
+      history.push({ role: 'user', content: question });
+      history.push({ role: 'assistant', content: data.answer });
+    } catch (err) {
+      loadingEl.remove();
+      addErrorMessage('連線失敗，請稍後再試：' + err.message);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', send);
+  questionInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send();
+  });
+
+  (function init() {
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('userId');
+    if (!userId) {
+      showFatalError('沒有指定使用者，請從命盤頁面的使用者列表點「AI解盤」進入。');
+      return;
+    }
+    const users = loadSavedUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) {
+      showFatalError('找不到這個使用者的資料，可能已經被刪除。');
+      return;
+    }
+    whoLabel.textContent = user.name;
+    chartInput = buildChartInput(user.birthInfo);
+    showEmptyState();
+  })();
+</script>
+</body>
+</html>
