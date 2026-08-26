@@ -1,55 +1,129 @@
 # Twelve Palaces
 
+十二宮是命盤的人生領域框架。宮位先定義「正在看哪一類人生主題」，星曜、四化、三方四正與其他結構再決定該主題如何表現。宮位本身不直接代表吉凶。
+
 ## 命
-- domain: identity、personality、self_direction
-- priority: self、behavior、life_orientation
+
+- core_question: 我是怎樣的人？
+- meaning: 核心自我、人格傾向、先天特質、行動方式與人生方向。
+- extended: 自我認知、才能、興趣、價值取向，以及面對人生的基本姿態。
+- interpretation: 命宮是整張命盤的主要參照點，描述較核心、自然的自己；不要把命宮直接等同於一生所有事件的結果。
 
 ## 兄弟
-- domain: siblings、peers、same_level_relationships
-- priority: peer_dynamics、cooperation、competition
+
+- core_question: 我如何與和我平行的人相處？
+- meaning: 兄弟姊妹、手足緣分與同輩關係。
+- extended: 同學、同事、同僚等平行關係，以及同輩間的支持、合作、競爭與比較。
+- interpretation: 重點在平行關係如何運作；與僕役宮相比，兄弟偏同輩／內部的人際關係，僕役偏社會合作與團隊關係。
 
 ## 夫妻
-- domain: romantic_relationship、partner、intimacy
-- priority: relationship_style、partner_expectation、interaction
+
+- core_question: 我如何進入親密關係？
+- meaning: 戀愛、婚姻、伴侶與親密互動。
+- extended: 關係需求、伴侶期待、相處模式、親密感、支持與衝突。
+- interpretation: 夫妻宮首先描述「我在親密關係中的模式」，也可作為觀察伴侶特質的主要入口，但不可把宮內星曜直接等同於伴侶完整人格；深入六親判法可再使用相關進階方法。
 
 ## 子女
-- domain: children、creation、creative_output、enjoyment
-- priority: parenting、creation、projects
+
+- core_question: 我如何培養、創造與投入？
+- meaning: 子女、晚輩，以及養育與付出的方式。
+- extended: 學生、弟子、晚輩、作品、創作、興趣與投入後形成的成果。
+- interpretation: 子女、晚輩與創作共享「投入→培養／創造→形成成果」的結構，因此子女宮不只用於判斷子女，也可分析創造與培養類主題。
 
 ## 財帛
-- domain: earning、money、resources
-- priority: earning、management、retention
+
+- core_question: 我如何與資源相處？
+- meaning: 金錢、收入、財務能力與資源運用。
+- extended: 賺錢方式、理財、支出、資產累積、蓄財與資源配置。
+- interpretation: 主要描述資源如何取得、管理、使用與累積，不單獨等同於一生財富總量；具體財務結果需與命、官祿、福德、田宅及時間層合參。
 
 ## 疾厄
-- domain: body、mind、stress、health_tendency
-- priority: stress、balance、self_care
+
+- core_question: 我的身心如何承受生活？
+- meaning: 身體狀態、體質傾向、壓力反應、身心平衡與恢復。
+- extended: 作息、生活節奏、自我照顧、身心消耗與長期壓力模式。
+- interpretation: 主要觀察身心承載與生活模式的命理傾向；健康問題應作象徵性解讀，不將單一星曜直接等同確定疾病。
 
 ## 遷移
-- domain: external_environment、public_behavior、movement、opportunity
-- priority: outside_world、mobility、adaptation
+
+- core_question: 我進入外部世界後如何呈現？
+- meaning: 對外表現、外部環境中的行動方式、移動與適應。
+- extended: 出外、旅行、搬遷、異地發展、公開場合、社會互動與外部機會。
+- interpretation: 遷移宮是命宮的對宮，偏向進入外部場域後被啟動的另一面；可反映外界容易先接收到的表現與初步形象，但不等同於自己主觀希望呈現的樣子，也不等同於他人最終的完整評價。
 
 ## 僕役
-- domain: team、subordinates、friends、collaboration
-- priority: cooperation、delegation、network
+
+- core_question: 我如何與他人共同做事？
+- meaning: 朋友、同事、合作夥伴、部屬與社會人際網絡。
+- extended: 團隊、上下屬關係、合作、分工、支持者、人脈與社會連結。
+- interpretation: 重點在合作、分工與團隊互動；與兄弟宮相比，僕役偏社會性、合作性及上下屬關係，兄弟偏平行同輩關係。
 
 ## 官祿
-- domain: career、work、achievement
-- priority: capability、role、recognition、work_environment
+
+- core_question: 我如何在社會中發揮？
+- meaning: 工作、職業角色、事業發展、責任與社會成就。
+- extended: 職業方向、能力展現、職位、升遷、專業、工作環境與社會認可。
+- interpretation: 主要描述如何把能力投入社會並形成職業角色，不單獨等同收入；財務結果應另參財帛及相關宮位。
 
 ## 田宅
-- domain: home、property、family_base、material_security
-- priority: home、assets、security
+
+- core_question: 我的生活基地是什麼？
+- meaning: 家庭、居所、生活基地、不動產與固定資源。
+- extended: 房屋、居住環境、家庭結構、家產、固定資產與物質安全感。
+- interpretation: 不只看房產數量，也看一個人如何建立可安定、可恢復的生活基地；必要時亦可延伸到工作場所或固定機構環境。
 
 ## 福德
-- domain: inner_mind、values、enjoyment、psychological_state
-- priority: mental_activity、values、rest
+
+- core_question: 什麼才讓我覺得人生值得？
+- meaning: 內在需求、精神世界、價值觀、心理活動、享受與滿足感。
+- extended: 興趣、嗜好、休息方式、生活品質、精神滿足與對人生的主觀感受。
+- interpretation: 描述「怎麼感受生活」而不只是心情好壞；可與財帛互參，財帛偏物質資源的取得與運用，福德偏使用資源後的精神感受與滿足。
 
 ## 父母
-- domain: parents、elders、authority、support
-- priority: family_of_origin、authority、support
 
-# Three-Direction / Four-Rectification
+- core_question: 我從什麼樣的家庭與權威系統而來？
+- meaning: 父母、長輩、原生家庭、權威與支持系統。
+- extended: 父母緣分、家庭來源、童年環境、長輩影響、主管／權威關係，以及文書、制度與正式權力系統。
+- interpretation: 描述上一代與權威如何成為個人成長背景與支持／約束來源；父母的細分屬進階六親判法，不應取代父母宮的基本意義。
 
+### Parent Interpretation
+
+父母的細分存在不同傳統判法，不應視為單一流派的絕對規則：
+
+- 父母宮：主要觀察父母整體、父母緣分、家庭來源與父母對個人成長的影響。
+- 太陽：傳統上常作為父親的輔助象徵，可與父母宮合參。
+- 太陰：傳統上常作為母親的輔助象徵，可與父母宮合參。
+- 部分傳統判法會以父母宮偏父親、兄弟宮偏母親，再以太陽、太陰輔助判斷；這屬流派差異，使用時應標示來源。
+- 不可只因太陽或太陰落入某宮，就直接判定父母吉凶；仍須結合所在宮位、廟旺、四化、三方四正與整體結構。
+- 進一步分析某位六親本人時，可依「宮位太極轉換」將該六親的對應宮位作為新的命宮，再重新觀察其十二宮；此屬進階判法，不作一般解盤的預設步驟。
+
+### Palace Cross-References
+
+以下互參關係用於補充特定主題，不取代本宮、三方四正或整體命盤：
+
+- 財帛 ↔ 福德：物質資源的取得、管理與精神享受、支出及滿足方式。
+- 疾厄 ↔ 父母：身心狀態與先天體質、家庭條件及父母所代表的支持背景。
+- 命 ↔ 遷移：核心自我與進入外部世界後的表現。
+- 夫妻 ↔ 官祿：親密關係與工作、社會角色之間的支持、競爭或拉扯。
+- 田宅 ↔ 子女：家庭基地、生活環境與子女、創造、培養之間的互動。
+- 兄弟 ↔ 僕役：平行同輩關係與社會合作／團隊關係之間的差異與聯動。
+
+# Three-Direction / Four-Rectification (三方四正)
+
+## Structure
+三方四正由**本宮、兩個三合宮與對宮**組成。
+每組資料依以下順序排列：
+**[本宮] + [三方宮] + [三方宮] + [對宮]**
+
+例如：
+
+- 命: 命 + 財帛 + 官祿 + 遷移
+因此「命 + 財帛 + 官祿 + 遷移」代表：
+- 本宮：命
+- 三方：財帛、官祿
+- 對宮：遷移
+
+## 資料內容
 - 命: 命 + 財帛 + 官祿 + 遷移
 - 兄弟: 兄弟 + 疾厄 + 田宅 + 僕役
 - 夫妻: 夫妻 + 遷移 + 福德 + 官祿
@@ -62,3 +136,12 @@
 - 田宅: 田宅 + 兄弟 + 子女 + 疾厄
 - 福德: 福德 + 夫妻 + 財帛 + 遷移
 - 父母: 父母 + 疾厄 + 子女 + 僕役
+
+## 解讀方式
+- **本宮：內在／核心** — 代表該宮位主題本身，以及個人在此主題上的基本狀態與傾向。
+- **三方：條件／支援** — 代表影響本宮發展的能力、資源、條件與實際運作方式，可視為本宮的重要支撐。
+- **對宮：外在／互動** — 代表與本宮相對的外部環境、他人回饋、互動與牽動，也可能形成對本宮的拉力或衝擊。
+
+影響力不以固定比例計算；一般以**本宮最核心、對宮次之、三方較輕**作為基本原則，但實際強弱仍須依星曜、四化、廟旺與整體結構判斷。
+
+解讀時以本宮為中心，將三方與對宮視為共同作用的條件，不逐宮獨立下結論。若四宮訊息一致，代表該主題的方向較明確；若彼此矛盾，則應解讀為內在需求、支援條件與外在環境之間的拉扯。
