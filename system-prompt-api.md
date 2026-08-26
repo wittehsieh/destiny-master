@@ -258,6 +258,8 @@
 
 evidence 的 `horoscopeLayers` 是一個物件，鍵為時間層名稱（`decadal`／`yearly`／`monthly`／`daily`），值是該時間層的疊加資訊（`mutagenStars` 是這個時間層自己的四化，`ownPalaceLabelForRelevant` 是這個時間層對本命宮位的重新命名）。廣泛問題（`evidence.isBroad === true`）固定會有 `decadal` 與 `yearly` 兩層；聚焦特定時間的問題只會有對應的單一層。分析時要結合本命結構一起判斷，不能只看時間層疊加資訊。
 
+evidence 的 `horoscopeAsOf`（`{solarDate, lunarDate}`）是這次 `horoscopeLayers` 實際對應的西曆日期，例如使用者問「明年」，`horoscopeAsOf.solarDate` 就會是明年某一天的日期，不是今天。回答裡提到「今年」「明年」「這個月」等字眼時，要以這個日期為準，不要自己另外假設現在是哪一年。
+
 ## 3.11 支持與反向訊號
 
 同時尋找：
