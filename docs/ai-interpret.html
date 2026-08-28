@@ -14,6 +14,7 @@
     --muted: #8f93a0;
   }
   * { box-sizing: border-box; }
+  .hidden { display: none; }
   html, body {
     height: 100%;
     margin: 0;
@@ -24,13 +25,17 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding: 10px;
+    gap: 10px;
   }
   header {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
   }
   header a {
@@ -50,20 +55,37 @@
     margin-left: auto;
   }
 
+  /* 目前這一輪問題，固定在上方，不隨 AI 回答捲動 */
+  #question-card {
+    flex: 0 0 auto;
+    background: rgba(91, 155, 213, 0.1);
+    border: 1px solid #5b9bd5;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  #question-card .q-label {
+    display: block;
+    font-size: 0.72rem;
+    color: #5b9bd5;
+    margin-bottom: 3px;
+  }
+
   #output-area {
-    flex: 1 1 80%;
+    flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
   }
 
   .empty-state {
     margin: auto;
     text-align: center;
     max-width: 480px;
+    padding: 16px;
   }
   .empty-state p {
     color: var(--muted);
@@ -91,34 +113,24 @@
   }
 
   .msg {
-    max-width: 80%;
     border-radius: 10px;
     padding: 10px 14px;
     font-size: 0.92rem;
     line-height: 1.7;
   }
-  .msg.user {
-    align-self: flex-end;
-    background: rgba(91, 155, 213, 0.14);
-    border: 1px solid #5b9bd5;
-    white-space: pre-wrap;
-  }
   .msg.assistant {
-    align-self: flex-start;
-    max-width: 90%;
     background: var(--panel);
     border: 1px solid var(--border);
   }
   .msg.error {
-    align-self: flex-start;
     background: rgba(224, 112, 112, 0.12);
     border: 1px solid #e07070;
     color: #e07070;
   }
   .msg.loading {
-    align-self: flex-start;
     color: var(--muted);
     font-size: 0.85rem;
+    margin: auto;
   }
 
   .msg.assistant h3, .msg.assistant h4 {
@@ -146,15 +158,12 @@
 
   #input-area {
     flex: 0 0 auto;
-    min-height: 20vh;
-    border-top: 1px solid var(--border);
-    padding: 12px 16px;
     display: flex;
     gap: 10px;
-    align-items: stretch;
   }
   #question-input {
-    flex: 1;
+    flex: 0 0 90%;
+    width: 90%;
     resize: none;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -163,27 +172,21 @@
     padding: 10px 12px;
     font-size: 0.92rem;
     font-family: inherit;
+    min-height: 64px;
   }
   #send-btn {
-    flex: 0 0 auto;
-    align-self: flex-end;
+    flex: 0 0 10%;
+    width: 10%;
     background: var(--panel);
     border: 1px solid var(--gold);
     color: var(--gold);
     border-radius: 8px;
-    padding: 0 20px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
+    padding: 0;
   }
   #send-btn:hover { background: rgba(201, 162, 75, 0.12); }
   #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  @media (max-width: 640px) {
-    .msg { max-width: 92%; }
-    .msg.assistant { max-width: 96%; }
-    #input-area { flex-direction: column; }
-    #send-btn { align-self: stretch; padding: 8px; }
-  }
 </style>
 </head>
 <body>
@@ -192,6 +195,11 @@
     <h1>✨ AI 解盤</h1>
     <span class="who" id="who-label"></span>
   </header>
+
+  <div id="question-card" class="hidden">
+    <span class="q-label">你問</span>
+    <span id="question-card-text"></span>
+  </div>
 
   <div id="output-area"></div>
 
@@ -212,6 +220,8 @@
     '這十年整體運勢如何',
   ];
 
+  const questionCard = document.getElementById('question-card');
+  const questionCardText = document.getElementById('question-card-text');
   const outputArea = document.getElementById('output-area');
   const questionInput = document.getElementById('question-input');
   const sendBtn = document.getElementById('send-btn');
@@ -328,32 +338,26 @@
     return htmlParts.join('\n');
   }
 
-  function addUserMessage(text) {
-    const div = document.createElement('div');
-    div.className = 'msg user';
-    div.textContent = text;
-    outputArea.appendChild(div);
-    outputArea.scrollTop = outputArea.scrollHeight;
+  function showQuestionCard(text) {
+    questionCardText.textContent = text;
+    questionCard.classList.remove('hidden');
   }
 
-  function addAssistantMessage(text) {
-    const div = document.createElement('div');
-    div.className = 'msg assistant';
-    div.innerHTML = renderAssistantMarkdown(text);
-    outputArea.appendChild(div);
-    outputArea.scrollTop = outputArea.scrollHeight;
-    return div;
+  function showLoading() {
+    outputArea.innerHTML = '<div class="msg loading">解盤中...</div>';
   }
 
-  function addErrorMessage(text) {
-    const div = document.createElement('div');
-    div.className = 'msg error';
-    div.textContent = text;
-    outputArea.appendChild(div);
-    outputArea.scrollTop = outputArea.scrollHeight;
+  function showAssistantMessage(text) {
+    outputArea.innerHTML = `<div class="msg assistant">${renderAssistantMarkdown(text)}</div>`;
+    outputArea.scrollTop = 0;
+  }
+
+  function showErrorMessage(text) {
+    outputArea.innerHTML = `<div class="msg error">${escapeHtml(text)}</div>`;
   }
 
   function showEmptyState() {
+    questionCard.classList.add('hidden');
     outputArea.innerHTML = `
       <div class="empty-state">
         <p>想問什麼都可以，或直接點下面的範例開始：</p>
@@ -377,19 +381,10 @@
     const question = questionInput.value.trim();
     if (!question || !chartInput) return;
 
-    if (outputArea.querySelector('.empty-state')) {
-      outputArea.innerHTML = '';
-    }
-
-    addUserMessage(question);
+    showQuestionCard(question);
     questionInput.value = '';
     sendBtn.disabled = true;
-
-    const loadingEl = document.createElement('div');
-    loadingEl.className = 'msg loading';
-    loadingEl.textContent = '解盤中...';
-    outputArea.appendChild(loadingEl);
-    outputArea.scrollTop = outputArea.scrollHeight;
+    showLoading();
 
     try {
       const res = await fetch(`${API_BASE}/api/interpret`, {
@@ -398,19 +393,17 @@
         body: JSON.stringify({ chartInput, question, history }),
       });
       const data = await res.json();
-      loadingEl.remove();
 
       if (!res.ok) {
-        addErrorMessage(data.error || `發生錯誤（HTTP ${res.status}）`);
+        showErrorMessage(data.error || `發生錯誤（HTTP ${res.status}）`);
         return;
       }
 
-      addAssistantMessage(data.answer);
+      showAssistantMessage(data.answer);
       history.push({ role: 'user', content: question });
       history.push({ role: 'assistant', content: data.answer });
     } catch (err) {
-      loadingEl.remove();
-      addErrorMessage('連線失敗，請稍後再試：' + err.message);
+      showErrorMessage('連線失敗，請稍後再試：' + err.message);
     } finally {
       sendBtn.disabled = false;
     }
