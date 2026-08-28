@@ -27,9 +27,11 @@
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
-    /* iPhone 的圓角螢幕＋Home Indicator 會吃掉畫面四周，用 safe-area-inset
-       讓內容自動避開；下方額外多留一點空間給 Home Indicator 手勢區。 */
-    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(20px, calc(env(safe-area-inset-bottom) + 10px)) max(10px, env(safe-area-inset-left));
+    /* iPhone 的圓角螢幕＋Home Indicator 會吃掉畫面四周。左右兩側的圓角是螢幕
+       物理曲面造成的，safe-area-inset-left/right 在直向模式下其實是 0（那兩個
+       inset 只反映瀏海／Home Indicator，不反映圓角本身），所以左右要靠加大基礎
+       padding 來避開，不能只靠 env()；上下則兩者並用，取較大值。 */
+    padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(24px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
     gap: 10px;
   }
   header {
@@ -62,17 +64,11 @@
     flex: 0 0 auto;
     background: rgba(91, 155, 213, 0.1);
     border: 1px solid #5b9bd5;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    line-height: 1.4;
     white-space: pre-wrap;
-  }
-  #question-card .q-label {
-    display: block;
-    font-size: 0.72rem;
-    color: #5b9bd5;
-    margin-bottom: 3px;
   }
 
   #output-area {
@@ -199,7 +195,6 @@
   </header>
 
   <div id="question-card" class="hidden">
-    <span class="q-label">你問</span>
     <span id="question-card-text"></span>
   </div>
 
