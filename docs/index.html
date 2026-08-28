@@ -544,6 +544,22 @@
   .new-user-btn {
     width: 100%;
   }
+  .debug-toggle-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: #8f93a0;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .debug-toggle-btn.on {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
   .empty-user-hint {
     color: #8f93a0;
     font-size: 0.85rem;
@@ -608,6 +624,7 @@
     <div class="user-list" id="user-list"></div>
     <div class="empty-user-hint hidden" id="empty-user-hint">本機還沒有儲存過的使用者，按下方新增一位。</div>
     <button type="button" class="new-user-btn" id="new-user-btn">+ 新增使用者</button>
+    <button type="button" class="debug-toggle-btn" id="debug-toggle-btn"></button>
   </div>
 
   <div id="form-screen" class="hidden">
@@ -731,9 +748,15 @@
 <script src="solar-time.js"></script>
 <script src="lunar-typescript.min.js"></script>
 <script>
-  // debug 模式：首頁網址帶 ?debug=1 時，之後跳轉到「問問小仙」頁面會一併帶上，
-  // 讓那邊套用固定回覆、不會真的呼叫 API。
-  const isDebugMode = new URLSearchParams(location.search).get('debug') === '1';
+  // debug 模式：存在 localStorage，不是只看網址參數 -- 如果是「加入主畫面」
+  // 全螢幕開啟的（standalone），完全沒有網址列可以帶 ?debug=1，所以改成用
+  // localStorage 記住這個裝置的偏好，並在畫面上留一顆按鈕可以直接切換。
+  // 網址帶 ?debug=1 進來時，也會順便把偏好記起來，方便一次性開關。
+  const DEBUG_MODE_KEY = 'ziweiDebugMode';
+  if (new URLSearchParams(location.search).get('debug') === '1') {
+    localStorage.setItem(DEBUG_MODE_KEY, '1');
+  }
+  let isDebugMode = localStorage.getItem(DEBUG_MODE_KEY) === '1';
 
   const dateTypeSelect = document.getElementById('dateType');
   const leapField = document.getElementById('leap-field');
@@ -750,6 +773,7 @@
   const userListEl = document.getElementById('user-list');
   const emptyUserHint = document.getElementById('empty-user-hint');
   const newUserBtn = document.getElementById('new-user-btn');
+  const debugToggleBtn = document.getElementById('debug-toggle-btn');
   const chartActions = document.getElementById('chart-actions');
   const copyChartBtn = document.getElementById('copy-chart-btn');
   const askXianBtn = document.getElementById('ask-xian-btn');
@@ -1800,7 +1824,19 @@
     });
   });
 
+  function updateDebugToggleLabel() {
+    debugToggleBtn.textContent = isDebugMode ? '🐛 Debug 模式：開（點擊關閉）' : '🐛 Debug 模式：關（點擊開啟，問問小仙會用固定回覆）';
+    debugToggleBtn.classList.toggle('on', isDebugMode);
+  }
+
+  debugToggleBtn.addEventListener('click', () => {
+    isDebugMode = !isDebugMode;
+    localStorage.setItem(DEBUG_MODE_KEY, isDebugMode ? '1' : '0');
+    updateDebugToggleLabel();
+  });
+
   // ---- 開場畫面：有存過使用者就顯示列表，否則直接進入表單 ----
+  updateDebugToggleLabel();
   renderStartScreen();
   showScreen(loadSavedUsers().length > 0 ? 'start' : 'form');
 </script>

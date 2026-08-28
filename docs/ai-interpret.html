@@ -170,6 +170,8 @@
     width: 90%;
     max-width: 90%;
     margin: 0 auto;
+    /* 再往下移動自身高度的一半，不影響版面排列（不擠壓 output-area）。 */
+    transform: translateY(50%);
   }
   #question-input {
     flex: 1;
