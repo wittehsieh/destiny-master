@@ -26,7 +26,9 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
-    padding: 16px;
+    /* iPhone 瀏海／圓角螢幕：上下用 safe-area-inset，左右圓角在直向模式下
+       safe-area-inset 是 0，要靠加大基礎 padding 才能真的避開。 */
+    padding: max(16px, calc(env(safe-area-inset-top) + 8px)) max(18px, env(safe-area-inset-right)) max(16px, calc(env(safe-area-inset-bottom) + 8px)) max(18px, env(safe-area-inset-left));
   }
   h1 {
     font-size: 1.3rem;
@@ -316,7 +318,9 @@
   }
 
   @media (max-width: 640px) {
-    body { padding: 10px; }
+    body {
+      padding: max(10px, calc(env(safe-area-inset-top) + 8px)) max(14px, env(safe-area-inset-right)) max(10px, calc(env(safe-area-inset-bottom) + 8px)) max(14px, env(safe-area-inset-left));
+    }
     .panel { padding: 12px; }
 
     /* 輸入資訊區、命盤區、說明區、純文字區：填滿左右、垂直依序排列 */
