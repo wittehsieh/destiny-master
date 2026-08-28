@@ -436,36 +436,6 @@
   let chartInput = null;
   let history = [];
 
-  // debug 模式：?debug=1，不呼叫真的 API，固定回覆同一段文字，方便測 UI／不燒 API 額度。
-  const isDebugMode = new URLSearchParams(location.search).get('debug') === '1';
-  const DEBUG_ANSWER = [
-    '### 說到底，你是什麼樣的人',
-    '',
-    '這是 **debug 模式** 的固定回覆，不管你問什麼，都會看到這一段文字——用來測試畫面排版、markdown 渲染跟複製功能，不會真的呼叫 API、不會消耗 OpenAI 額度。',
-    '',
-    '---',
-    '',
-    '### 這段文字包含的排版元素',
-    '',
-    '- 標題（###）',
-    '- **粗體**',
-    '- 分隔線（---）',
-    '- 條列項目',
-    '- 底下這張表格',
-    '',
-    '| 面向 | 評價 | 一句結論 |',
-    '| --- | --- | --- |',
-    '| 心態與心情 | ★★★★☆ | debug 用固定資料 |',
-    '| 工作運 | ★★★☆☆ | debug 用固定資料 |',
-    '| 財運 | ★★★★☆ | debug 用固定資料 |',
-    '',
-    '---',
-    '',
-    '### 一句話總結',
-    '',
-    '如果你看得到這段文字、樣式跟捲動都正常，代表畫面這一層沒問題，可以放心去測真的功能。',
-  ].join('\n');
-
   async function send() {
     const question = questionInput.value.trim();
     if (!question || !chartInput) return;
@@ -474,15 +444,6 @@
     questionInput.value = '';
     sendBtn.disabled = true;
     showLoading();
-
-    if (isDebugMode) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      showAssistantMessage(DEBUG_ANSWER);
-      history.push({ role: 'user', content: question });
-      history.push({ role: 'assistant', content: DEBUG_ANSWER });
-      sendBtn.disabled = false;
-      return;
-    }
 
     try {
       const res = await fetch(`${API_BASE}/api/interpret`, {

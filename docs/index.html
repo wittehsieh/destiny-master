@@ -731,17 +731,6 @@
 <script src="solar-time.js"></script>
 <script src="lunar-typescript.min.js"></script>
 <script>
-  // debug 模式：只用網址 ?debug=1 / ?debug=0 切換，畫面上不留任何按鈕。
-  // 狀態仍存進 localStorage，這樣「加入主畫面」全螢幕開啟（沒有網址列可改）
-  // 時也能維持上次用網址設定的狀態 -- 用一般瀏覽器分頁開一次帶參數的網址
-  // 設定好之後，之後從主畫面圖示開就會沿用，不用每次都帶網址。
-  const DEBUG_MODE_KEY = 'ziweiDebugMode';
-  const debugParamValue = new URLSearchParams(location.search).get('debug');
-  if (debugParamValue === '1' || debugParamValue === '0') {
-    localStorage.setItem(DEBUG_MODE_KEY, debugParamValue);
-  }
-  const isDebugMode = localStorage.getItem(DEBUG_MODE_KEY) === '1';
-
   const dateTypeSelect = document.getElementById('dateType');
   const leapField = document.getElementById('leap-field');
   const form = document.getElementById('chart-form');
@@ -1429,8 +1418,7 @@
       saveStatus.textContent = '請先儲存這筆資料，才能使用問問小仙';
       return;
     }
-    const debugParam = isDebugMode ? '&debug=1' : '';
-    location.href = `ai-interpret.html?userId=${encodeURIComponent(currentUserId)}${debugParam}`;
+    location.href = `ai-interpret.html?userId=${encodeURIComponent(currentUserId)}`;
   });
 
   deleteChartBtn.addEventListener('click', () => {
