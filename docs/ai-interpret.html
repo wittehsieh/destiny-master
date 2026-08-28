@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>AI 解盤</title>
 <style>
   :root {
@@ -27,7 +27,9 @@
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
-    padding: 10px;
+    /* iPhone 的圓角螢幕＋Home Indicator 會吃掉畫面四周，用 safe-area-inset
+       讓內容自動避開；下方額外多留一點空間給 Home Indicator 手勢區。 */
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(20px, calc(env(safe-area-inset-bottom) + 10px)) max(10px, env(safe-area-inset-left));
     gap: 10px;
   }
   header {
