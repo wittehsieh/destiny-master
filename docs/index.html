@@ -140,9 +140,8 @@
     max-width: 1160px;
     margin: 0 auto 16px;
     display: flex;
-    gap: 16px;
+    justify-content: center;
     flex-wrap: wrap;
-    align-items: flex-start;
   }
   .chart-grid {
     display: grid;
@@ -152,30 +151,6 @@
     aspect-ratio: 1 / 1;
     flex: 1 1 560px;
     max-width: 800px;
-  }
-  .palace-info-panel {
-    flex: 1 1 260px;
-    max-width: 320px;
-    position: sticky;
-    top: 16px;
-    margin: 0;
-  }
-  .palace-info-panel h2 {
-    font-size: 1rem;
-    color: var(--gold);
-    margin: 0 0 10px;
-  }
-  #palace-info-content {
-    font-size: 0.85rem;
-    line-height: 1.7;
-    color: #b7bccb;
-  }
-  #palace-info-content .info-title {
-    color: var(--gold);
-    font-weight: bold;
-    font-size: 0.95rem;
-    display: block;
-    margin-bottom: 6px;
   }
   .palace {
     background: var(--panel);
@@ -323,19 +298,15 @@
     }
     .panel { padding: 12px; }
 
-    /* 輸入資訊區、命盤區、說明區、純文字區：填滿左右、垂直依序排列 */
+    /* 輸入資訊區、命盤區：填滿左右、垂直依序排列 */
     .chart-wrap {
       flex-direction: column;
       gap: 10px;
     }
-    .chart-grid,
-    .palace-info-panel {
+    .chart-grid {
       flex-basis: auto;
       width: 100%;
       max-width: 100%;
-    }
-    .palace-info-panel {
-      position: static;
     }
 
     .chart-grid {
@@ -407,16 +378,38 @@
     color: #e07070;
     align-self: center;
   }
-  .name-row {
+  /* ---- 使用者命盤：頂部摘要與儲存／刪除 ---- */
+  .chart-user-summary {
+    max-width: 1160px;
+    margin: 0 auto 16px;
+  }
+  .chart-user-summary h2 {
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin: 0 0 6px;
+  }
+  #chart-user-meta {
+    font-size: 0.85rem;
+    color: #8f93a0;
+    margin-bottom: 12px;
+  }
+  .chart-top-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
   }
-  .name-row input {
-    flex: 1;
-    min-width: 0;
+  .delete-chart-btn {
+    background: transparent;
+    color: #e07070;
+    border: 1px solid #e07070;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
   }
-  .name-row .save-chart-btn {
-    flex: 0 0 auto;
+  .delete-chart-btn:hover {
+    background: rgba(224, 112, 112, 0.1);
   }
 
   /* ---- 八字 ---- */
@@ -617,18 +610,14 @@
     <button type="button" class="new-user-btn" id="new-user-btn">+ 新增使用者</button>
   </div>
 
-  <div id="main-screen" class="hidden">
-  <button type="button" class="back-to-list-btn" id="back-to-list-btn">← 返回使用者列表</button>
+  <div id="form-screen" class="hidden">
+  <button type="button" class="back-to-list-btn">← 返回使用者列表</button>
 
   <div class="panel">
     <form id="chart-form">
       <div class="field full-width">
         <label for="userName">姓名</label>
-        <div class="name-row">
-          <input type="text" id="userName" placeholder="用來儲存與辨識這筆資料" autocomplete="off" />
-          <button type="button" class="save-chart-btn" id="save-chart-btn">💾 儲存</button>
-        </div>
-        <span id="save-status"></span>
+        <input type="text" id="userName" placeholder="用來儲存與辨識這筆資料" autocomplete="off" />
       </div>
       <div class="field">
         <label for="dateType">曆別</label>
@@ -685,12 +674,23 @@
     <div class="error hidden" id="error-msg"></div>
   </div>
 
+  </div><!-- /#form-screen -->
+
+  <div id="chart-screen" class="hidden">
+  <button type="button" class="back-to-list-btn">← 返回使用者列表</button>
+
+  <div class="panel chart-user-summary">
+    <h2 id="chart-user-name"></h2>
+    <div id="chart-user-meta"></div>
+    <div class="chart-top-actions">
+      <button type="button" class="save-chart-btn" id="save-chart-btn">💾 儲存</button>
+      <button type="button" class="delete-chart-btn" id="delete-chart-btn">🗑 刪除</button>
+    </div>
+    <span id="save-status"></span>
+  </div>
+
   <div class="chart-wrap">
     <div class="chart-grid hidden" id="chart-grid"></div>
-    <div class="panel palace-info-panel hidden" id="palace-info-panel">
-      <h2>宮位說明</h2>
-      <div id="palace-info-content">將游標移到宮位上查看該宮對人生的影響</div>
-    </div>
   </div>
 
   <div class="chart-actions hidden" id="chart-actions">
@@ -704,7 +704,7 @@
     <button type="button" class="copy-chart-btn bazi-copy-btn" id="copy-bazi-btn">📋 一鍵複製八字</button>
   </div>
 
-  </div><!-- /#main-screen -->
+  </div><!-- /#chart-screen -->
 
   <div class="modal-backdrop hidden" id="overwrite-modal">
     <div class="modal-box">
@@ -731,19 +731,25 @@
 <script src="solar-time.js"></script>
 <script src="lunar-typescript.min.js"></script>
 <script>
+  // debug 模式：首頁網址帶 ?debug=1 時，之後跳轉到「問問小仙」頁面會一併帶上，
+  // 讓那邊套用固定回覆、不會真的呼叫 API。
+  const isDebugMode = new URLSearchParams(location.search).get('debug') === '1';
+
   const dateTypeSelect = document.getElementById('dateType');
   const leapField = document.getElementById('leap-field');
   const form = document.getElementById('chart-form');
   const errorMsg = document.getElementById('error-msg');
   const chartGrid = document.getElementById('chart-grid');
-  const palaceInfoPanel = document.getElementById('palace-info-panel');
   const nameInput = document.getElementById('userName');
   const startScreen = document.getElementById('start-screen');
-  const mainScreen = document.getElementById('main-screen');
+  const formScreen = document.getElementById('form-screen');
+  const chartScreen = document.getElementById('chart-screen');
+  const chartUserName = document.getElementById('chart-user-name');
+  const chartUserMeta = document.getElementById('chart-user-meta');
+  const deleteChartBtn = document.getElementById('delete-chart-btn');
   const userListEl = document.getElementById('user-list');
   const emptyUserHint = document.getElementById('empty-user-hint');
   const newUserBtn = document.getElementById('new-user-btn');
-  const backToListBtn = document.getElementById('back-to-list-btn');
   const chartActions = document.getElementById('chart-actions');
   const copyChartBtn = document.getElementById('copy-chart-btn');
   const askXianBtn = document.getElementById('ask-xian-btn');
@@ -1044,37 +1050,6 @@
   };
   const MUTAGEN_LABELS = ['祿', '權', '科', '忌'];
 
-  const palaceInfoContent = document.getElementById('palace-info-content');
-  const DEFAULT_PALACE_INFO = '將游標移到宮位上查看該宮對人生的影響';
-
-  const PALACE_MEANINGS = {
-    '命宮': '代表與生俱來的個性、才華與人生格局，是全盤的核心，影響整體命運的基調與發展方向。',
-    '兄弟': '代表與兄弟姊妹、平輩或合夥人之間的緣分、互動狀況與相處品質。',
-    '夫妻': '代表感情婚姻的狀態、配偶的特質，以及親密關係的相處模式。',
-    '子女': '代表與子女的緣分及教養狀況，也可延伸為部屬、晚輩關係與創作能力。',
-    '財帛': '代表賺錢能力、理財觀念、財富來源與財運的起伏變化。',
-    '疾厄': '代表健康狀況、體質強弱，以及容易罹患疾病的傾向。',
-    '遷移': '代表外出、遠行、環境變動的際遇，以及在外發展的人際機運。',
-    '僕役': '代表朋友、同事、部屬等人際往來，是助力還是阻力。',
-    '交友': '代表朋友、同事、部屬等人際往來，是助力還是阻力。',
-    '官祿': '代表事業發展、工作表現、學業成就與社會地位。',
-    '田宅': '代表不動產、居住環境、家庭背景與財產累積狀況。',
-    '福德': '代表精神生活、興趣嗜好、心靈狀態與先天福分。',
-    '父母': '代表與父母長輩的緣分及互動，也反映與上司、長官的相處狀況。',
-  };
-
-  function showPalaceInfo(palace) {
-    const meaning = PALACE_MEANINGS[palace.name] || '';
-    palaceInfoContent.innerHTML = `
-      <span class="info-title">${escapeHtml(palace.name)}${palace.isBodyPalace ? '（身宮）' : ''}</span>
-      ${escapeHtml(meaning)}
-    `;
-  }
-
-  function resetPalaceInfo() {
-    palaceInfoContent.textContent = DEFAULT_PALACE_INFO;
-  }
-
   const BRANCH_POSITION = {
     '巳': { col: 1, row: 1 },
     '午': { col: 2, row: 1 },
@@ -1149,6 +1124,12 @@
   function runChart() {
     errorMsg.classList.add('hidden');
 
+    if (!nameInput.value.trim()) {
+      errorMsg.textContent = '請輸入姓名';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
+
     if (!lastSolarTimeResult) {
       errorMsg.textContent = '請完整選擇出生地與出生時間，系統才能算出真太陽時';
       errorMsg.classList.remove('hidden');
@@ -1179,13 +1160,17 @@
       computeBazi();
       updateBaziContent();
       baziSection.classList.remove('hidden');
+
+      chartUserName.textContent = nameInput.value.trim();
+      chartUserMeta.textContent = formatBirthInfoMeta(getCurrentBirthInfo());
+      showScreen('chart');
     } catch (err) {
       errorMsg.textContent = err.message || '排盤失敗';
       errorMsg.classList.remove('hidden');
       chartGrid.classList.add('hidden');
-      palaceInfoPanel.classList.add('hidden');
       chartActions.classList.add('hidden');
       resetBaziSection();
+      showScreen('form');
     }
   }
 
@@ -1197,7 +1182,6 @@
   function renderChart(astrolabe) {
     chartGrid.innerHTML = '';
     chartGrid.classList.remove('hidden');
-    palaceInfoPanel.classList.remove('hidden');
     chartActions.classList.remove('hidden');
 
     const centerInfo = document.createElement('div');
@@ -1264,14 +1248,8 @@
         <div class="horoscope-overlay" data-index="${palace.index}"></div>
       `;
 
-      cell.addEventListener('mouseenter', () => showPalaceInfo(palace));
-      cell.addEventListener('mouseleave', resetPalaceInfo);
-      cell.addEventListener('click', () => showPalaceInfo(palace));
-
       chartGrid.appendChild(cell);
     });
-
-    resetPalaceInfo();
   }
 
   function updateHoroscopeOverlay() {
@@ -1444,7 +1422,23 @@
       saveStatus.textContent = '請先儲存這筆資料，才能使用問問小仙';
       return;
     }
-    location.href = `ai-interpret.html?userId=${encodeURIComponent(currentUserId)}`;
+    const debugParam = isDebugMode ? '&debug=1' : '';
+    location.href = `ai-interpret.html?userId=${encodeURIComponent(currentUserId)}${debugParam}`;
+  });
+
+  deleteChartBtn.addEventListener('click', () => {
+    if (!currentUserId) {
+      saveStatus.textContent = '這筆資料還沒有儲存，不需要刪除';
+      return;
+    }
+    const user = loadSavedUsers().find((u) => u.id === currentUserId);
+    const label = user ? user.name : '這筆資料';
+    showConfirmModal(`確定要刪除「${label}」的資料嗎？此動作無法復原。`, () => {
+      const remaining = loadSavedUsers().filter((u) => u.id !== currentUserId);
+      saveSavedUsers(remaining);
+      renderStartScreen();
+      showScreen('start');
+    });
   });
 
   // ---- 八字（lunar-typescript，簡體轉繁體） ----
@@ -1617,7 +1611,8 @@
 
   function showScreen(name) {
     startScreen.classList.toggle('hidden', name !== 'start');
-    mainScreen.classList.toggle('hidden', name !== 'main');
+    formScreen.classList.toggle('hidden', name !== 'form');
+    chartScreen.classList.toggle('hidden', name !== 'chart');
   }
 
   function formatBirthInfoMeta(b) {
@@ -1635,7 +1630,6 @@
             <span class="user-list-name">${escapeHtml(u.name)}</span>
             <span class="user-list-meta">${escapeHtml(formatBirthInfoMeta(u.birthInfo))}</span>
           </button>
-          <a class="user-ai-btn" href="ai-interpret.html?userId=${encodeURIComponent(u.id)}">✨ 問問小仙</a>
           <button type="button" class="user-delete-btn" data-id="${escapeHtml(u.id)}">刪除</button>
         </div>
       `)
@@ -1664,7 +1658,6 @@
   }
 
   function openUserChart(user) {
-    showScreen('main');
     loadProfileIntoForm(user);
     currentUserId = user.id;
     runChart();
@@ -1788,7 +1781,6 @@
     errorMsg.classList.add('hidden');
     saveStatus.textContent = '';
     chartGrid.classList.add('hidden');
-    palaceInfoPanel.classList.add('hidden');
     chartActions.classList.add('hidden');
     currentPayload = null;
     currentAstrolabe = null;
@@ -1798,17 +1790,19 @@
 
   newUserBtn.addEventListener('click', () => {
     resetFormToDefaults();
-    showScreen('main');
+    showScreen('form');
   });
 
-  backToListBtn.addEventListener('click', () => {
-    renderStartScreen();
-    showScreen('start');
+  document.querySelectorAll('.back-to-list-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      renderStartScreen();
+      showScreen('start');
+    });
   });
 
   // ---- 開場畫面：有存過使用者就顯示列表，否則直接進入表單 ----
   renderStartScreen();
-  showScreen(loadSavedUsers().length > 0 ? 'start' : 'main');
+  showScreen(loadSavedUsers().length > 0 ? 'start' : 'form');
 </script>
 </body>
 </html>
