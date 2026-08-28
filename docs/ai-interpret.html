@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>AI 解盤</title>
+<title>問問小仙</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
@@ -39,7 +39,7 @@
        物理曲面造成的，safe-area-inset-left/right 在直向模式下其實是 0（那兩個
        inset 只反映瀏海／Home Indicator，不反映圓角本身），所以左右要靠加大基礎
        padding 來避開，不能只靠 env()；上下則兩者並用，取較大值。 */
-    padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(24px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(12px, calc(env(safe-area-inset-bottom) + 6px)) max(18px, env(safe-area-inset-left));
     gap: 10px;
   }
   header {
@@ -167,8 +167,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 75%;
-    max-width: 75%;
+    width: 90%;
+    max-width: 90%;
     margin: 0 auto;
   }
   #question-input {
@@ -198,12 +198,26 @@
   }
   #send-btn:hover { background: rgba(201, 162, 75, 0.12); }
   #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .copy-full-btn {
+    display: block;
+    margin: 14px auto 4px;
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .copy-full-btn:hover { background: rgba(201, 162, 75, 0.12); }
+  .copy-full-btn.copied { border-color: #70ad47; color: #70ad47; }
 </style>
 </head>
 <body>
   <header>
     <a href="index.html">← 返回命盤</a>
-    <h1>✨ AI 解盤</h1>
+    <h1>✨ 問問小仙</h1>
     <span class="who" id="who-label"></span>
   </header>
 
@@ -357,9 +371,42 @@
     outputArea.innerHTML = '<div class="msg loading">解盤中...</div>';
   }
 
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
   function showAssistantMessage(text) {
-    outputArea.innerHTML = `<div class="msg assistant">${renderAssistantMarkdown(text)}</div>`;
+    outputArea.innerHTML = `
+      <div class="msg assistant">${renderAssistantMarkdown(text)}</div>
+      <button type="button" class="copy-full-btn" id="copy-full-btn">📋 複製全文</button>
+    `;
     outputArea.scrollTop = 0;
+
+    const copyBtn = document.getElementById('copy-full-btn');
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await copyTextToClipboard(text);
+        copyBtn.textContent = '已複製 ✓';
+        copyBtn.classList.add('copied');
+      } catch (err) {
+        copyBtn.textContent = '複製失敗';
+      }
+      setTimeout(() => {
+        copyBtn.textContent = '📋 複製全文';
+        copyBtn.classList.remove('copied');
+      }, 1500);
+    });
   }
 
   function showErrorMessage(text) {
@@ -387,6 +434,36 @@
   let chartInput = null;
   let history = [];
 
+  // debug 模式：?debug=1，不呼叫真的 API，固定回覆同一段文字，方便測 UI／不燒 API 額度。
+  const isDebugMode = new URLSearchParams(location.search).get('debug') === '1';
+  const DEBUG_ANSWER = [
+    '### 說到底，你是什麼樣的人',
+    '',
+    '這是 **debug 模式** 的固定回覆，不管你問什麼，都會看到這一段文字——用來測試畫面排版、markdown 渲染跟複製功能，不會真的呼叫 API、不會消耗 OpenAI 額度。',
+    '',
+    '---',
+    '',
+    '### 這段文字包含的排版元素',
+    '',
+    '- 標題（###）',
+    '- **粗體**',
+    '- 分隔線（---）',
+    '- 條列項目',
+    '- 底下這張表格',
+    '',
+    '| 面向 | 評價 | 一句結論 |',
+    '| --- | --- | --- |',
+    '| 心態與心情 | ★★★★☆ | debug 用固定資料 |',
+    '| 工作運 | ★★★☆☆ | debug 用固定資料 |',
+    '| 財運 | ★★★★☆ | debug 用固定資料 |',
+    '',
+    '---',
+    '',
+    '### 一句話總結',
+    '',
+    '如果你看得到這段文字、樣式跟捲動都正常，代表畫面這一層沒問題，可以放心去測真的功能。',
+  ].join('\n');
+
   async function send() {
     const question = questionInput.value.trim();
     if (!question || !chartInput) return;
@@ -395,6 +472,15 @@
     questionInput.value = '';
     sendBtn.disabled = true;
     showLoading();
+
+    if (isDebugMode) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      showAssistantMessage(DEBUG_ANSWER);
+      history.push({ role: 'user', content: question });
+      history.push({ role: 'assistant', content: DEBUG_ANSWER });
+      sendBtn.disabled = false;
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/interpret`, {
@@ -428,7 +514,7 @@
     const params = new URLSearchParams(location.search);
     const userId = params.get('userId');
     if (!userId) {
-      showFatalError('沒有指定使用者，請從命盤頁面的使用者列表點「AI解盤」進入。');
+      showFatalError('沒有指定使用者，請從命盤頁面的使用者列表點「問問小仙」進入。');
       return;
     }
     const users = loadSavedUsers();

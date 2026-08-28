@@ -695,6 +695,7 @@
 
   <div class="chart-actions hidden" id="chart-actions">
     <button type="button" class="copy-chart-btn" id="copy-chart-btn">📋 一鍵複製（命盤＋大限流年流月流日）</button>
+    <button type="button" class="copy-chart-btn ask-xian-btn" id="ask-xian-btn">✨ 問問小仙</button>
   </div>
 
   <div class="panel bazi-panel hidden" id="bazi-section">
@@ -745,6 +746,7 @@
   const backToListBtn = document.getElementById('back-to-list-btn');
   const chartActions = document.getElementById('chart-actions');
   const copyChartBtn = document.getElementById('copy-chart-btn');
+  const askXianBtn = document.getElementById('ask-xian-btn');
   const saveChartBtn = document.getElementById('save-chart-btn');
   const saveStatus = document.getElementById('save-status');
   const overwriteModal = document.getElementById('overwrite-modal');
@@ -1031,6 +1033,7 @@
 
   let currentPayload = null;
   let currentAstrolabe = null;
+  let currentUserId = null;
   let horoscopeState = { decadal: false, yearly: false, monthly: false, daily: false };
 
   const SCOPE_CONFIG = {
@@ -1436,6 +1439,14 @@
     }, 1500);
   });
 
+  askXianBtn.addEventListener('click', () => {
+    if (!currentUserId) {
+      saveStatus.textContent = '請先儲存這筆資料，才能使用問問小仙';
+      return;
+    }
+    location.href = `ai-interpret.html?userId=${encodeURIComponent(currentUserId)}`;
+  });
+
   // ---- 八字（lunar-typescript，簡體轉繁體） ----
 
   const S2T_MAP = {
@@ -1624,7 +1635,7 @@
             <span class="user-list-name">${escapeHtml(u.name)}</span>
             <span class="user-list-meta">${escapeHtml(formatBirthInfoMeta(u.birthInfo))}</span>
           </button>
-          <a class="user-ai-btn" href="ai-interpret.html?userId=${encodeURIComponent(u.id)}">✨ AI解盤</a>
+          <a class="user-ai-btn" href="ai-interpret.html?userId=${encodeURIComponent(u.id)}">✨ 問問小仙</a>
           <button type="button" class="user-delete-btn" data-id="${escapeHtml(u.id)}">刪除</button>
         </div>
       `)
@@ -1655,6 +1666,7 @@
   function openUserChart(user) {
     showScreen('main');
     loadProfileIntoForm(user);
+    currentUserId = user.id;
     runChart();
   }
 
@@ -1738,8 +1750,11 @@
       const idx = list.findIndex((u) => u.name === name);
       if (idx >= 0) {
         list[idx].birthInfo = birthInfo;
+        currentUserId = list[idx].id;
       } else {
-        list.push({ id: generateId(), name, birthInfo });
+        const newId = generateId();
+        list.push({ id: newId, name, birthInfo });
+        currentUserId = newId;
       }
       saveSavedUsers(list);
       openModal(successModal);
@@ -1777,6 +1792,7 @@
     chartActions.classList.add('hidden');
     currentPayload = null;
     currentAstrolabe = null;
+    currentUserId = null;
     resetBaziSection();
   }
 
