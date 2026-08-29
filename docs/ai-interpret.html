@@ -465,6 +465,7 @@
   let entries = []; // [{id, question, answer}]
   let nextEntryId = 1;
   let activeEntryId = null;
+  let isSending = false;
 
   function scrollToBottom() {
     outputArea.scrollTop = outputArea.scrollHeight;
@@ -487,11 +488,25 @@
     }
   }
 
+  // 送出新問題後到答案回來前，固定題目區塊要顯示「這個新問題」，且已有的
+  // 問答都先變灰暗；這段期間捲動不應該把它蓋回去，所以搭配 isSending 使用。
+  function showPendingQuestion(question) {
+    activeEntryId = null;
+    entries.forEach((e) => {
+      const pairEl = outputArea.querySelector(`.qa-pair[data-id="${e.id}"]`);
+      if (!pairEl) return;
+      pairEl.querySelector('.qa-question').classList.add('dim');
+      pairEl.querySelector('.qa-answer').classList.add('dim');
+    });
+    questionCardText.textContent = question;
+    questionCard.classList.remove('hidden');
+  }
+
   // 捲動追蹤：永遠只有一組問答是「正常」，其餘都是「灰暗」。判斷方式是找
   // 「題目區塊頂端已經捲到固定區塊下緣（或更上面）」的最後一組——往下滑會
   // 不斷換成更新的那組，往上滑則會退回上一組，剛好符合預期的行為。
   function updateActiveEntry() {
-    if (entries.length === 0) return;
+    if (entries.length === 0 || isSending) return;
     // 已經捲到最底部（或內容根本不夠長需要捲動）時，一律視為「顯示最新一組」，
     // 符合「起始畫面停在最下方＝最新資訊」的預期，不受下面逐項比對結果影響。
     const atBottom = outputArea.scrollTop + outputArea.clientHeight >= outputArea.scrollHeight - 2;
@@ -636,6 +651,8 @@
 
     questionInput.value = '';
     sendBtn.disabled = true;
+    isSending = true;
+    showPendingQuestion(question);
     showLoading();
 
     try {
@@ -663,6 +680,15 @@
       showErrorMessage('連線失敗，請稍後再試：' + err.message);
     } finally {
       sendBtn.disabled = false;
+      isSending = false;
+      if (activeEntryId === null) {
+        // 送出失敗、沒有新增問答，還原成送出前的狀態
+        if (entries.length > 0) {
+          updateActiveEntry();
+        } else {
+          questionCard.classList.add('hidden');
+        }
+      }
     }
   }
 
