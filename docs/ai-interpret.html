@@ -67,7 +67,7 @@
     margin-left: auto;
   }
 
-  /* 目前這一輪問題，固定在上方，不隨 AI 回答捲動 */
+  /* 目前捲動到的那一組問答的題目，固定在上方，不隨內容捲動 */
   #question-card {
     flex: 0 0 auto;
     background: rgba(91, 155, 213, 0.1);
@@ -77,6 +77,55 @@
     font-size: 0.82rem;
     line-height: 1.4;
     white-space: pre-wrap;
+  }
+
+  .qa-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .qa-pair + .qa-pair {
+    margin-top: 16px;
+  }
+  .qa-question-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+  }
+  .qa-question {
+    max-width: 78%;
+    background: rgba(91, 155, 213, 0.14);
+    border: 1px solid #5b9bd5;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    transition: opacity 0.2s;
+  }
+  .qa-delete-btn {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .qa-delete-btn:hover {
+    border-color: #e07070;
+    color: #e07070;
+  }
+  .qa-question.dim, .qa-answer.dim {
+    opacity: 0.32;
+    transition: opacity 0.2s;
   }
 
   #output-area {
@@ -124,14 +173,11 @@
     font-size: 0.92rem;
     line-height: 1.7;
   }
-  .msg.assistant {
-    background: var(--panel);
-    border: 1px solid var(--border);
-  }
   .msg.error {
     background: rgba(224, 112, 112, 0.12);
     border: 1px solid #e07070;
     color: #e07070;
+    margin-top: 12px;
   }
   .msg.loading {
     color: var(--muted);
@@ -139,28 +185,37 @@
     margin: auto;
   }
 
-  .msg.assistant h3, .msg.assistant h4 {
+  .qa-answer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    transition: opacity 0.2s;
+  }
+  .qa-answer h3, .qa-answer h4 {
     color: var(--gold);
     margin: 14px 0 6px;
     font-size: 1rem;
   }
-  .msg.assistant h3:first-child, .msg.assistant h4:first-child { margin-top: 0; }
-  .msg.assistant p { margin: 8px 0; }
-  .msg.assistant strong { color: var(--gold); }
-  .msg.assistant hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-  .msg.assistant table {
+  .qa-answer h3:first-child, .qa-answer h4:first-child { margin-top: 0; }
+  .qa-answer p { margin: 8px 0; }
+  .qa-answer strong { color: var(--gold); }
+  .qa-answer hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .qa-answer table {
     border-collapse: collapse;
     width: 100%;
     margin: 8px 0;
     font-size: 0.85rem;
   }
-  .msg.assistant th, .msg.assistant td {
+  .qa-answer th, .qa-answer td {
     border: 1px solid var(--border);
     padding: 5px 8px;
     text-align: left;
   }
-  .msg.assistant th { color: var(--gold); }
-  .msg.assistant ul { margin: 8px 0; padding-left: 20px; }
+  .qa-answer th { color: var(--gold); }
+  .qa-answer ul { margin: 8px 0; padding-left: 20px; }
 
   #input-area {
     flex: 0 0 auto;
@@ -170,8 +225,6 @@
     width: 90%;
     max-width: 90%;
     margin: 0 auto;
-    /* 再往下移動自身高度的一半，不影響版面排列（不擠壓 output-area）。 */
-    transform: translateY(50%);
   }
   #question-input {
     flex: 1;
@@ -364,15 +417,6 @@
     return htmlParts.join('\n');
   }
 
-  function showQuestionCard(text) {
-    questionCardText.textContent = text;
-    questionCard.classList.remove('hidden');
-  }
-
-  function showLoading() {
-    outputArea.innerHTML = '<div class="msg loading">解盤中...</div>';
-  }
-
   async function copyTextToClipboard(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(text);
@@ -388,17 +432,129 @@
     document.body.removeChild(ta);
   }
 
-  function showAssistantMessage(text) {
-    outputArea.innerHTML = `
-      <div class="msg assistant">${renderAssistantMarkdown(text)}</div>
-      <button type="button" class="copy-full-btn" id="copy-full-btn">📋 複製全文</button>
-    `;
-    outputArea.scrollTop = 0;
+  // ---- 對話紀錄：存在 localStorage，用 userId 分開，永久保存 ----
+  const CHAT_STORAGE_KEY = 'ziweiChatHistory';
 
-    const copyBtn = document.getElementById('copy-full-btn');
+  function loadChatHistoryMap() {
+    try {
+      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function persistEntries() {
+    const map = loadChatHistoryMap();
+    map[currentUserId] = entries.map(({ question, answer }) => ({ question, answer }));
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(map));
+  }
+
+  // 送給 API 的 history 是從目前的 entries 現算出來的，這樣刪除某一組問答
+  // 後，之後的提問自然就不會再帶著被刪掉的內容當上下文。
+  function buildApiHistory() {
+    return entries.flatMap((e) => [
+      { role: 'user', content: e.question },
+      { role: 'assistant', content: e.answer },
+    ]);
+  }
+
+  let chartInput = null;
+  let currentUserId = null;
+  let entries = []; // [{id, question, answer}]
+  let nextEntryId = 1;
+  let activeEntryId = null;
+
+  function scrollToBottom() {
+    outputArea.scrollTop = outputArea.scrollHeight;
+  }
+
+  function setActiveEntry(id) {
+    if (id === activeEntryId) return;
+    activeEntryId = id;
+    entries.forEach((e) => {
+      const pairEl = outputArea.querySelector(`.qa-pair[data-id="${e.id}"]`);
+      if (!pairEl) return;
+      const isActive = e.id === id;
+      pairEl.querySelector('.qa-question').classList.toggle('dim', !isActive);
+      pairEl.querySelector('.qa-answer').classList.toggle('dim', !isActive);
+    });
+    const activeEntry = entries.find((e) => e.id === id);
+    if (activeEntry) {
+      questionCardText.textContent = activeEntry.question;
+      questionCard.classList.remove('hidden');
+    }
+  }
+
+  // 捲動追蹤：永遠只有一組問答是「正常」，其餘都是「灰暗」。判斷方式是找
+  // 「題目區塊頂端已經捲到固定區塊下緣（或更上面）」的最後一組——往下滑會
+  // 不斷換成更新的那組，往上滑則會退回上一組，剛好符合預期的行為。
+  function updateActiveEntry() {
+    if (entries.length === 0) return;
+    // 已經捲到最底部（或內容根本不夠長需要捲動）時，一律視為「顯示最新一組」，
+    // 符合「起始畫面停在最下方＝最新資訊」的預期，不受下面逐項比對結果影響。
+    const atBottom = outputArea.scrollTop + outputArea.clientHeight >= outputArea.scrollHeight - 2;
+    if (atBottom) {
+      setActiveEntry(entries[entries.length - 1].id);
+      return;
+    }
+    const headerBottom = questionCard.getBoundingClientRect().bottom;
+    let activeId = entries[0].id;
+    for (const e of entries) {
+      const pairEl = outputArea.querySelector(`.qa-pair[data-id="${e.id}"]`);
+      if (!pairEl) continue;
+      const questionEl = pairEl.querySelector('.qa-question');
+      if (questionEl.getBoundingClientRect().top <= headerBottom) {
+        activeId = e.id;
+      }
+    }
+    setActiveEntry(activeId);
+  }
+
+  outputArea.addEventListener('scroll', () => {
+    window.requestAnimationFrame(updateActiveEntry);
+  });
+
+  function deleteEntry(id) {
+    entries = entries.filter((e) => e.id !== id);
+    persistEntries();
+    if (entries.length === 0) {
+      showEmptyState();
+      return;
+    }
+    renderAllEntries();
+  }
+
+  function buildQaPairEl(entry) {
+    const pair = document.createElement('div');
+    pair.className = 'qa-pair';
+    pair.dataset.id = String(entry.id);
+    pair.innerHTML = `
+      <div class="qa-question-row">
+        <div class="qa-question dim">${escapeHtml(entry.question)}</div>
+        <button type="button" class="qa-delete-btn" title="刪除這組問答">✕</button>
+      </div>
+      <div class="qa-answer dim">${renderAssistantMarkdown(entry.answer)}</div>
+    `;
+    pair.querySelector('.qa-delete-btn').addEventListener('click', () => deleteEntry(entry.id));
+    return pair;
+  }
+
+  function ensureCopyFullBtn() {
+    const old = document.getElementById('copy-full-btn');
+    if (old) old.remove();
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-full-btn';
+    copyBtn.id = 'copy-full-btn';
+    copyBtn.textContent = '📋 複製全文';
     copyBtn.addEventListener('click', async () => {
+      const fullText = entries
+        .map((e) => `Q：${e.question}\n\nA：${e.answer}`)
+        .join('\n\n---\n\n');
       try {
-        await copyTextToClipboard(text);
+        await copyTextToClipboard(fullText);
         copyBtn.textContent = '已複製 ✓';
         copyBtn.classList.add('copied');
       } catch (err) {
@@ -409,10 +565,48 @@
         copyBtn.classList.remove('copied');
       }, 1500);
     });
+    outputArea.appendChild(copyBtn);
+  }
+
+  function renderAllEntries() {
+    outputArea.innerHTML = '';
+    entries.forEach((entry) => outputArea.appendChild(buildQaPairEl(entry)));
+    ensureCopyFullBtn();
+    activeEntryId = null;
+    // 必須先取消隱藏固定題目區塊，updateActiveEntry() 才能量到正確的
+    // getBoundingClientRect()，否則第一次計算會誤判成 top:0 的隱藏元素。
+    questionCard.classList.remove('hidden');
+    scrollToBottom();
+    updateActiveEntry();
+  }
+
+  function appendEntryToDom(entry) {
+    if (outputArea.querySelector('.empty-state')) outputArea.innerHTML = '';
+    const existingCopyBtn = document.getElementById('copy-full-btn');
+    if (existingCopyBtn) existingCopyBtn.remove();
+    outputArea.appendChild(buildQaPairEl(entry));
+    ensureCopyFullBtn();
+    scrollToBottom();
+    setActiveEntry(entry.id);
+  }
+
+  function showLoading() {
+    const el = document.createElement('div');
+    el.className = 'msg loading';
+    el.id = 'loading-msg';
+    el.textContent = '解盤中...';
+    outputArea.appendChild(el);
+    scrollToBottom();
   }
 
   function showErrorMessage(text) {
-    outputArea.innerHTML = `<div class="msg error">${escapeHtml(text)}</div>`;
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+    const el = document.createElement('div');
+    el.className = 'msg error';
+    el.textContent = text;
+    outputArea.appendChild(el);
+    scrollToBottom();
   }
 
   function showEmptyState() {
@@ -433,14 +627,13 @@
     });
   }
 
-  let chartInput = null;
-  let history = [];
-
   async function send() {
     const question = questionInput.value.trim();
     if (!question || !chartInput) return;
 
-    showQuestionCard(question);
+    const existingError = outputArea.querySelector('.msg.error');
+    if (existingError) existingError.remove();
+
     questionInput.value = '';
     sendBtn.disabled = true;
     showLoading();
@@ -449,19 +642,24 @@
       const res = await fetch(`${API_BASE}/api/interpret`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chartInput, question, history }),
+        body: JSON.stringify({ chartInput, question, history: buildApiHistory() }),
       });
       const data = await res.json();
+      const loadingEl = document.getElementById('loading-msg');
+      if (loadingEl) loadingEl.remove();
 
       if (!res.ok) {
         showErrorMessage(data.error || `發生錯誤（HTTP ${res.status}）`);
         return;
       }
 
-      showAssistantMessage(data.answer);
-      history.push({ role: 'user', content: question });
-      history.push({ role: 'assistant', content: data.answer });
+      const entry = { id: nextEntryId++, question, answer: data.answer };
+      entries.push(entry);
+      persistEntries();
+      appendEntryToDom(entry);
     } catch (err) {
+      const loadingEl = document.getElementById('loading-msg');
+      if (loadingEl) loadingEl.remove();
       showErrorMessage('連線失敗，請稍後再試：' + err.message);
     } finally {
       sendBtn.disabled = false;
@@ -488,7 +686,15 @@
     }
     whoLabel.textContent = user.name;
     chartInput = buildChartInput(user.birthInfo);
-    showEmptyState();
+    currentUserId = userId;
+
+    const savedEntries = loadChatHistoryMap()[userId] || [];
+    if (savedEntries.length > 0) {
+      entries = savedEntries.map((e) => ({ id: nextEntryId++, question: e.question, answer: e.answer }));
+      renderAllEntries();
+    } else {
+      showEmptyState();
+    }
   })();
 </script>
 </body>
